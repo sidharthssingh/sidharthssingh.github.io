@@ -26,6 +26,7 @@
     pwd: cmdPwd,
     date: cmdDate,
     neofetch: cmdNeofetch,
+    game: cmdGame,
   };
 
   const COMMAND_NAMES = Object.keys(COMMANDS);
@@ -264,6 +265,13 @@
 
   function cmdDate() {
     print(new Date().toString());
+  }
+
+  function cmdGame() {
+    print('<span class="bold yellow">JOB QUEST</span> - A 2D RPG resume adventure!');
+    print('Opening game in a new tab...');
+    print('<span class="dim">Upload your resume, create a character, and apply to jobs in style.</span>');
+    window.open('game/', '_blank');
   }
 
   function cmdNeofetch() {
