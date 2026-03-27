@@ -175,7 +175,7 @@ export function characterScene() {
     state.character.shirtColor = opts.shirtColor;
     state.character.pantsColor = opts.pantsColor;
     state.character.hairColor = opts.hairColor;
-    state.character.hairStyle = HAIR_STYLES[selections[4]].toLowerCase();
+    state.character.hairStyle = selections[4];
     saveState();
     go("world");
   });

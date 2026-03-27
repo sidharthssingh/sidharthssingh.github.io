@@ -10,7 +10,7 @@ const DEFAULT_STATE = {
     shirtColor: "#58a6ff",
     pantsColor: "#30363d",
     hairColor: "#3b2314",
-    hairStyle: "short",
+    hairStyle: 0,
   },
   jobs: [],
   appliedJobs: [],
