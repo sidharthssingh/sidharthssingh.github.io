@@ -1,5 +1,6 @@
 import { state, saveState, resetState } from "../state.js";
 import { parseResumePDF } from "../resume-parser.js";
+import { fetchJobs } from "../jobs.js";
 
 export function titleScene() {
   // Dark background
@@ -100,6 +101,7 @@ export function titleScene() {
       state.character.name = result.name;
       saveState();
 
+      await fetchJobs();
       go("character");
     } catch (err) {
       console.error("Failed to parse resume:", err);
@@ -113,12 +115,13 @@ export function titleScene() {
   });
 
   // ENTER: use demo data
-  onKeyPress("enter", () => {
+  onKeyPress("enter", async () => {
     state.resumeText = "Demo user";
     state.resumeSkills = ["python", "sql", "product management", "agile", "ai"];
     state.resumeTitle = "Product Manager";
     state.character.name = "Demo Player";
     saveState();
+    await fetchJobs();
     go("character");
   });
 
