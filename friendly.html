@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sidharth Singh | Portfolio</title>
+  <meta name="description" content="Sidharth Singh - Senior Product Manager. Engineer turned PM. Building products at the intersection of AI, data & consumer experience.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-dim: #7d8590;
+      --accent: #58a6ff;
+      --accent-2: #bc8cff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --cyan: #39d0d8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Nav */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--accent); }
+
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+
+    .terminal-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--green);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .terminal-btn:hover {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(63, 185, 80, 0.1);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 4rem 0 3rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero .tagline {
+      font-size: 1.15rem;
+      color: var(--text-dim);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero .highlight {
+      color: var(--cyan);
+    }
+
+    .hero-links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 8px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .hero-links a:hover {
+      border-color: var(--accent);
+      background: rgba(88, 166, 255, 0.1);
+    }
+
+    .hero-links a.primary {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .hero-links a.primary:hover {
+      background: #79b8ff;
+    }
+
+    /* Sections */
+    section {
+      padding: 2.5rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    section h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--cyan);
+    }
+
+    /* Experience cards */
+    .role {
+      margin-bottom: 2rem;
+      padding: 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .role:hover { border-color: var(--text-dim); }
+
+    .role-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .role h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .role .company {
+      color: var(--accent);
+    }
+
+    .role .meta {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .role .description {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+    }
+
+    .role ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .role li {
+      font-size: 0.88rem;
+      padding: 0.3rem 0;
+      padding-left: 1.2rem;
+      position: relative;
+      color: var(--text);
+    }
+
+    .role li::before {
+      content: '\2192';
+      position: absolute;
+      left: 0;
+      color: var(--text-dim);
+    }
+
+    .metric {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* Education */
+    .edu-card {
+      margin-bottom: 1.25rem;
+      padding: 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .edu-card h3 { font-size: 1rem; margin-bottom: 0.25rem; }
+
+    .edu-card .degree {
+      color: var(--yellow);
+      font-size: 0.9rem;
+    }
+
+    .edu-card .details {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      margin-top: 0.4rem;
+    }
+
+    /* Skills */
+    .skill-group { margin-bottom: 1.25rem; }
+
+    .skill-group h3 {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+
+    .tag:hover { border-color: var(--accent); color: var(--accent); }
+
+    .tag.featured {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Projects placeholder */
+    .projects-placeholder {
+      text-align: center;
+      padding: 3rem 1rem;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--text-dim);
+    }
+
+    .projects-placeholder p { margin: 0.3rem 0; font-size: 0.9rem; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.8rem; }
+      .hero .tagline { font-size: 1rem; }
+      .role-header { flex-direction: column; }
+      nav { padding: 0.75rem 1rem; }
+      .container { padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="friendly.html" style="color:var(--text);font-weight:600;font-size:1rem;">SS</a>
+    <div class="nav-links">
+      <a href="#experience">Experience</a>
+      <a href="#education">Education</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="index.html" class="terminal-btn">&gt;_ Terminal Mode</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <div class="hero">
+      <h1>Sidharth Singh</h1>
+      <p class="tagline">Senior Product Manager &middot; Engineer turned PM<br>Building products at the intersection of <span class="highlight">AI, data & consumer experience</span></p>
+      <div class="hero-links">
+        <a href="resume.pdf" class="primary" download="Sidharth_Singh_Resume.pdf">Download Resume</a>
+        <a href="https://www.linkedin.com/in/sidharth-singh-206264125/" target="_blank">LinkedIn</a>
+        <a href="https://github.com/sidharthssingh" target="_blank">GitHub</a>
+        <a href="mailto:singhss@umich.edu">Email</a>
+      </div>
+    </div>
+
+    <section id="experience">
+      <h2>Experience</h2>
+
+      <div class="role">
+        <div class="role-header">
+          <h3><span class="company">XPoint</span> &middot; Senior Product Manager</h3>
+          <span class="meta">Apr 2025 &ndash; Present &middot; Austin, TX</span>
+        </div>
+        <p class="description">B2B geolocation compliance & fraud detection for regulated gaming operators</p>
+        <ul>
+          <li>Defined product vision for geolocation SDK across <span class="metric">20+ regulated jurisdictions</span> for BetMGM, Fanatics, Bet365, Entain</li>
+          <li>Launched 0&rarr;1 location intelligence surfaces serving <span class="metric">100M+ monthly checks</span> at 99.7% accuracy</li>
+          <li>Secured <span class="metric">$5M+ ACV</span> by converting competitive displacement threat into client retention win</li>
+          <li>Built fraud detection products improving visibility <span class="metric">3x</span>, reducing false positives by <span class="metric">40%</span></li>
+          <li>Architected LLM-powered competitive intelligence agent reducing manual research by <span class="metric">80%</span></li>
+          <li>Compressed client onboarding from 6 weeks to <span class="metric">1 day</span></li>
+        </ul>
+      </div>
+
+      <div class="role">
+        <div class="role-header">
+          <h3><span class="company">Light & Wonder</span> &middot; Technical Product Manager</h3>
+          <span class="meta">Aug 2024 &ndash; Apr 2025 &middot; Austin, TX</span>
+        </div>
+        <p class="description">Jackpot Party &mdash; 7th largest US mobile game by revenue</p>
+        <ul>
+          <li>Prioritized 12 features across 3 teams driving <span class="metric">20% retention improvement</span> contributing to $450M ARR</li>
+          <li>Launched consumer features delivering <span class="metric">15% engagement lift</span> and <span class="metric">10% MAU growth</span></li>
+          <li>Designed AI-driven player segmentation increasing conversion by <span class="metric">18%</span> across 3 cohorts</li>
+          <li>Shipped agentic AI workflows into core operations, reducing PM cycle time by <span class="metric">40%</span></li>
+        </ul>
+      </div>
+
+      <div class="role">
+        <div class="role-header">
+          <h3><span class="company">Games24x7</span> &middot; Technical Product Manager</h3>
+          <span class="meta">Mar 2020 &ndash; Jul 2022 &middot; Mumbai, India</span>
+        </div>
+        <p class="description">Unicorn gaming startup, 100M+ users, real money gaming & fantasy sports</p>
+        <ul>
+          <li>Boosted new customer ARR by <span class="metric">33% YoY</span>, gross profit by <span class="metric">25%</span></li>
+          <li>Launched AI/ML matchmaking features &rarr; <span class="metric">70% increase</span> in new user signups, <span class="metric">$5M+</span> incremental revenue</li>
+          <li>Built cross-platform fraud detection saving <span class="metric">$600K+ annually</span> across 10 geographies</li>
+          <li>Improved community health for 50M+ users, driving <span class="metric">70% NPS increase</span></li>
+        </ul>
+      </div>
+
+      <div class="role">
+        <div class="role-header">
+          <h3><span class="company">Games24x7</span> &middot; Senior Software Engineer</h3>
+          <span class="meta">Mar 2019 &ndash; Mar 2020 &middot; Mumbai, India</span>
+        </div>
+        <ul>
+          <li>Delivered 6 consumer features serving <span class="metric">7M+ users</span>, raising revenue by <span class="metric">$15M</span></li>
+          <li>Built A/B testing platform improving marketing efficiency by <span class="metric">72%</span>, reducing CAC by <span class="metric">35%</span></li>
+        </ul>
+      </div>
+
+      <div class="role">
+        <div class="role-header">
+          <h3><span class="company">Guru.com</span> &middot; Software Engineer</h3>
+          <span class="meta">Jan 2018 &ndash; Mar 2019 &middot; Noida, India</span>
+        </div>
+        <p class="description">Freelancing marketplace, 4M+ users</p>
+        <ul>
+          <li>Redesigned job posting UX &rarr; <span class="metric">5x increase</span> in jobs posted, <span class="metric">25% revenue lift</span></li>
+          <li>Architected payment safeguard reducing complaints by <span class="metric">80%</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="education">
+      <h2>Education</h2>
+
+      <div class="edu-card">
+        <h3>University of Michigan, Stephen M. Ross School of Business</h3>
+        <p class="degree">Master of Business Administration (STEM designated)</p>
+        <p class="details">
+          Aug 2022 &ndash; May 2024 &middot; Ann Arbor, MI<br>
+          Concentrations: Technology, Strategy, Design Thinking & Gen AI<br>
+          GMAT: <span class="metric">760</span> (99th percentile)
+        </p>
+      </div>
+
+      <div class="edu-card">
+        <h3>Shiv Nadar University</h3>
+        <p class="degree">B.Tech, Computer Science & Engineering</p>
+        <p class="details">
+          Aug 2014 &ndash; May 2018 &middot; Noida, India<br>
+          Merit full-tuition scholarship (top 1%-ile)
+        </p>
+      </div>
+    </section>
+
+    <section id="skills">
+      <h2>Skills & Tools</h2>
+
+      <div class="skill-group">
+        <h3>Product</h3>
+        <div class="tags">
+          <span class="tag featured">Product Strategy</span>
+          <span class="tag featured">Roadmapping</span>
+          <span class="tag">A/B Testing</span>
+          <span class="tag">Agile</span>
+          <span class="tag">Jira</span>
+          <span class="tag">UI/UX</span>
+          <span class="tag">Figma</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <h3>Technical</h3>
+        <div class="tags">
+          <span class="tag featured">Python</span>
+          <span class="tag featured">SQL</span>
+          <span class="tag">REST APIs</span>
+          <span class="tag">GCP</span>
+          <span class="tag">AWS</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <h3>AI / ML</h3>
+        <div class="tags">
+          <span class="tag featured">LLM Development</span>
+          <span class="tag featured">Prompt Engineering</span>
+          <span class="tag featured">Agentic Workflows</span>
+          <span class="tag">Claude</span>
+          <span class="tag">v0</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <h3>Data & Analytics</h3>
+        <div class="tags">
+          <span class="tag">Tableau</span>
+          <span class="tag">PowerBI</span>
+          <span class="tag">Data Analytics</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects">
+      <h2>Projects</h2>
+      <div class="projects-placeholder">
+        <p>Coming soon.</p>
+        <p>Cool things are being built.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>Built by Sidharth Singh &middot; <a href="mailto:singhss@umich.edu">singhss@umich.edu</a> &middot; <a href="https://www.linkedin.com/in/sidharth-singh-206264125/" target="_blank">LinkedIn</a></p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
