@@ -1,152 +1,149 @@
-const STORAGE_KEY = "career-quest-save-v3";
-
+const STORAGE_KEY = "career-quest-save-v4";
 const TILE = 32;
 const MAP_W = 20;
 const MAP_H = 16;
 
-const mapRows = [
+const worldMap = [
   "TTTTTTTTTTTTTTTTTTTT",
-  "T....F......F......T",
+  "T....GG....GG......T",
   "T..~~~~....~~~~....T",
-  "T..,.,,....,,.,....T",
+  "T..,.,,....,,.,.G..T",
   "T..,.,....,,.,.....T",
-  "T..,.,,....,,.,....T",
-  "T....F....,,..F....T",
-  "T..,,,,......F.,,..T",
-  "T..,,......F...,,..T",
+  "T..,.GG....GG.,....T",
+  "T....G....,,..G....T",
+  "T..,,,,......G.,,..T",
+  "T..,,...GG.F...,,..T",
   "T..,,....,,,,,,....T",
-  "T....F..,,,,..F....T",
+  "T....G..,,,,..G....T",
   "T........,,........T",
-  "T....F...,,...F....T",
+  "T....GG..,,...GG...T",
   "T........,,........T",
-  "T......F....F......T",
+  "T......G....G......T",
   "TTTTTTTTTTTTTTTTTTTT",
 ];
 
-const guideNpc = { x: 8, y: 5, name: "Coach Byte" };
-
-const stageLabels = {
-  scouted: "Scouted",
-  researched: "Researched",
-  tailored: "Tailored",
-  networked: "Networked",
-  screened: "Recruiter Screen",
-  applied: "Applied",
-  followedUp: "Followed Up",
-  interviewing: "Interview Ready",
-  offered: "Offer Won",
-  rejected: "Closed",
-};
-
-const actionRewards = {
-  researched: { xp: 15, coins: 8, label: "Company research logged" },
-  tailored: { xp: 25, coins: 12, label: "Resume tailored" },
-  networked: { xp: 20, coins: 10, label: "Outreach sent" },
-  screened: { xp: 22, coins: 12, label: "Recruiter screen prepared" },
-  applied: { xp: 35, coins: 18, label: "Application submitted" },
-  followedUp: { xp: 20, coins: 10, label: "Follow-up sent" },
-  interviewing: { xp: 55, coins: 22, label: "Interview prep complete" },
-  offered: { xp: 100, coins: 70, label: "Offer landed" },
+const actualJobLinks = {
+  openai: "https://openai.com/careers/search/?c=1888df7a-5060-4de1-a08d-a07e0ef96ab9",
+  anthropic: "https://www.anthropic.com/careers",
+  vercel: "https://vercel.com/careers",
+  linear: "https://linear.app/careers/86abcce0-04b2-405c-9a8e-e0ca84813914?ashby_jid=b7669c4b-eeca-421d-ba9a-d90203f6fcb2",
+  supabase: "https://supabase.com/careers",
+  riot: "https://www.riotgames.com/en/work-with-us",
+  atlassian: "https://www.atlassian.com/company/careers",
+  google: "https://www.google.com/about/careers/applications/jobs/results/",
+  microsoft: "https://careers.microsoft.com/v2/global/en/search",
+  apple: "https://jobs.apple.com/en-us/search",
+  stripe: "https://stripe.com/jobs/search",
+  databricks: "https://www.databricks.com/company/careers/open-positions",
+  figma: "https://www.figma.com/careers/",
+  notion: "https://www.notion.so/careers",
+  nvidia: "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite",
+  roblox: "https://careers.roblox.com/",
 };
 
 const keywordSignals = [
   { key: "ai", label: "AI", tests: ["ai", "machine learning", "llm", "model", "genai", "artificial intelligence"] },
-  { key: "api", label: "APIs", tests: ["api", "platform", "sdk", "developer", "integration"] },
-  { key: "analytics", label: "Analytics", tests: ["analytics", "metrics", "dashboard", "data", "sql", "experimentation"] },
-  { key: "growth", label: "Growth", tests: ["growth", "funnel", "retention", "acquisition", "engagement"] },
+  { key: "platform", label: "Platform", tests: ["platform", "api", "sdk", "developer", "integration"] },
+  { key: "analytics", label: "Analytics", tests: ["analytics", "metrics", "data", "sql", "experiment"] },
+  { key: "growth", label: "Growth", tests: ["growth", "retention", "funnel", "acquisition", "engagement"] },
   { key: "gaming", label: "Gaming", tests: ["game", "gaming", "player", "live ops", "live service"] },
-  { key: "leadership", label: "Leadership", tests: ["led", "managed", "cross-functional", "stakeholder", "strategy"] },
-  { key: "execution", label: "Execution", tests: ["launch", "shipped", "roadmap", "execution", "delivery"] },
-  { key: "ux", label: "UX", tests: ["user research", "design", "ux", "customer", "journey"] },
+  { key: "leadership", label: "Leadership", tests: ["led", "managed", "strategy", "stakeholder", "cross-functional"] },
+  { key: "execution", label: "Execution", tests: ["launched", "shipped", "roadmap", "delivery", "execution"] },
+  { key: "design", label: "UX", tests: ["user research", "design", "ux", "customer journey", "prototype"] },
 ];
 
-const companyArchetypes = [
-  { match: ["openai", "anthropic", "nvidia", "hugging face"], focus: "AI product judgment", prep: "Talk about model quality, safety, platform adoption, and fast iteration." },
-  { match: ["riot", "epic", "activision", "roblox"], focus: "Player and live-service product sense", prep: "Expect retention, economy, community trust, and long-term engagement questions." },
-  { match: ["vercel", "stripe", "plaid", "databricks", "supabase", "linear"], focus: "Platform and developer empathy", prep: "Expect API, workflow, and technical tradeoff questions." },
-  { match: ["google", "microsoft", "apple", "atlassian", "hubspot"], focus: "Scale and cross-functional influence", prep: "Expect ambiguity, stakeholder alignment, roadmap, and metrics questions." },
-  { match: ["robinhood", "coinbase", "brex"], focus: "Trust and regulated product thinking", prep: "Expect trust, risk, edge-case handling, and compliance framing." },
-];
-
-const demoLeads = [
-  { company: "Vercel", role: "Product Manager", location: "Remote", priority: "High", url: "https://vercel.com/careers", district: "starter", notes: "Developer tools storytelling and product velocity." },
-  { company: "Linear", role: "Product Manager", location: "Remote", priority: "High", url: "https://linear.app/careers", district: "starter", notes: "Execution quality and product craft." },
-  { company: "Notion", role: "Product Manager", location: "San Francisco", priority: "Medium", url: "https://www.notion.so/careers", district: "starter", notes: "Collaboration, knowledge workflows, and user empathy." },
-  { company: "Figma", role: "Product Manager", location: "New York / Remote", priority: "Medium", url: "https://www.figma.com/careers/", district: "starter", notes: "Creative tooling, multiplayer workflow, design-product partnership." },
-  { company: "Supabase", role: "Technical Product Manager", location: "Remote", priority: "High", url: "https://supabase.com/careers", district: "starter", notes: "Open-source product and platform thinking." },
-  { company: "Airtable", role: "Product Manager", location: "Remote", priority: "Medium", url: "https://airtable.com/careers", district: "starter", notes: "Workflow design and platform extensibility." },
-
-  { company: "Google", role: "Senior Product Manager", location: "Mountain View", priority: "High", url: "https://www.google.com/about/careers/applications/jobs/results/", district: "scale", notes: "Scale, prioritization, and product strategy." },
-  { company: "Microsoft", role: "Principal PM", location: "Seattle", priority: "High", url: "https://careers.microsoft.com/v2/global/en/search", district: "scale", notes: "Enterprise platform, influence, execution." },
-  { company: "Stripe", role: "Product Manager", location: "San Francisco", priority: "High", url: "https://stripe.com/jobs/search", district: "scale", notes: "Payments, APIs, and platform clarity." },
-  { company: "Databricks", role: "PM, ML Platform", location: "San Francisco", priority: "Medium", url: "https://www.databricks.com/company/careers/open-positions", district: "scale", notes: "Data and ML platform motion." },
-  { company: "Atlassian", role: "Senior Product Manager", location: "Remote", priority: "Medium", url: "https://www.atlassian.com/company/careers", district: "scale", notes: "B2B workflow and team productivity." },
-  { company: "HubSpot", role: "Product Manager", location: "Remote", priority: "Medium", url: "https://www.hubspot.com/careers/jobs", district: "scale", notes: "Growth loops and customer empathy." },
-
-  { company: "OpenAI", role: "Product Manager, API Platform", location: "San Francisco / Remote", priority: "High", url: "https://openai.com/careers/search", district: "summit", notes: "AI launches, developer platform, model product sense." },
-  { company: "Anthropic", role: "Product Manager", location: "San Francisco", priority: "High", url: "https://www.anthropic.com/careers", district: "summit", notes: "Safety and product judgment in frontier AI." },
-  { company: "Riot Games", role: "Senior PM, Live Services", location: "Los Angeles", priority: "Medium", url: "https://www.riotgames.com/en/work-with-us", district: "summit", notes: "Live ops, player trust, long-term engagement." },
-  { company: "Roblox", role: "Product Manager", location: "San Mateo", priority: "Medium", url: "https://careers.roblox.com/", district: "summit", notes: "UGC ecosystem, safety, and creator economy." },
-  { company: "NVIDIA", role: "Product Manager, AI", location: "Santa Clara", priority: "Medium", url: "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite", district: "summit", notes: "AI platform and technical storytelling." },
-  { company: "Apple", role: "PM, ML Platform", location: "Cupertino", priority: "Low", url: "https://jobs.apple.com/en-us/search", district: "summit", notes: "High standards, ecosystem thinking, execution." },
-];
-
-const districtDefs = [
+const districts = [
   {
     id: "starter",
-    name: "Launch Town",
-    subtitle: "Build your pipeline",
+    name: "Pallet Portfolio",
+    subtitle: "Catch leads and build momentum",
     unlockText: "Available from the start",
+    palette: { bg: "#10261d", grassA: "#7aa032", grassB: "#6c8f2f", treeA: "#446b2d", treeB: "#274d1d", water: "#3a7ca5", pathA: "#d6b06f", pathB: "#c89656" },
+    encounterRate: 0.18,
     isUnlocked: () => true,
     buildings: [
-      { id: "home", name: "Home Base", x: 9, y: 11, color: "#4d68a8", roof: "#3f4e87", glyph: "H", action: "home" },
-      { id: "scout", name: "Scout Lab", x: 5, y: 4, color: "#b88e2b", roof: "#946f1d", glyph: "S", action: "scout" },
-      { id: "resume", name: "Resume Forge", x: 10, y: 4, color: "#b84545", roof: "#913737", glyph: "R", action: "resume" },
-      { id: "network", name: "Network Cafe", x: 16, y: 7, color: "#4f8d62", roof: "#3f704e", glyph: "N", action: "network" },
-      { id: "apply", name: "Application Gate", x: 3, y: 7, color: "#8b6ad0", roof: "#6e51b0", glyph: "A", action: "apply" },
-      { id: "interview", name: "Interview Gym", x: 7, y: 9, color: "#d17c35", roof: "#b56526", glyph: "I", action: "interview" },
-      { id: "transit", name: "Transit Station", x: 12, y: 9, color: "#5aa7a7", roof: "#46898a", glyph: "T", action: "transit" },
+      { id: "home", label: "Home Base", glyph: "H", x: 9, y: 11, color: "#4d68a8", roof: "#3f4e87", action: "home" },
+      { id: "dex", label: "Job Dex Lab", glyph: "D", x: 5, y: 4, color: "#8e7d4d", roof: "#75653c", action: "dex" },
+      { id: "resume", label: "Resume Forge", glyph: "R", x: 10, y: 4, color: "#b84545", roof: "#913737", action: "resume" },
+      { id: "network", label: "Network Cafe", glyph: "N", x: 16, y: 7, color: "#4f8d62", roof: "#3f704e", action: "network" },
+      { id: "apply", label: "Application Gate", glyph: "A", x: 3, y: 7, color: "#8b6ad0", roof: "#6e51b0", action: "apply" },
+      { id: "dojo", label: "Interview Dojo", glyph: "I", x: 7, y: 9, color: "#d17c35", roof: "#b56526", action: "interview" },
+      { id: "transit", label: "Transit Depot", glyph: "T", x: 12, y: 9, color: "#5aa7a7", roof: "#46898a", action: "transit" },
+    ],
+    jobs: [
+      { id: "vercel-pm", company: "Vercel", role: "Product Manager", url: actualJobLinks.vercel, location: "NYC / SF", priority: "High", type: "Platform", emoji: "▲", hp: 92, district: "starter" },
+      { id: "linear-pm", company: "Linear", role: "Product Manager", url: actualJobLinks.linear, location: "Remote", priority: "High", type: "Execution", emoji: "◆", hp: 88, district: "starter" },
+      { id: "supabase-pm", company: "Supabase", role: "Product Team Role", url: actualJobLinks.supabase, location: "Remote", priority: "Medium", type: "Platform", emoji: "⚡", hp: 84, district: "starter" },
+      { id: "figma-pm", company: "Figma", role: "Product Role", url: actualJobLinks.figma, location: "Remote / NYC", priority: "Medium", type: "Design", emoji: "◼", hp: 86, district: "starter" },
+      { id: "notion-pm", company: "Notion", role: "Product Role", url: actualJobLinks.notion, location: "SF / NYC", priority: "Medium", type: "UX", emoji: "N", hp: 85, district: "starter" },
     ],
   },
   {
     id: "scale",
-    name: "Scale City",
-    subtitle: "Operate at bigger-company speed",
-    unlockText: "Unlocks after 2 applications or level 3",
-    isUnlocked: (state) => state.progress.applications >= 2 || state.progress.level >= 3,
+    name: "Cerulean Careers",
+    subtitle: "Research, screen, and level up",
+    unlockText: "Unlocks after 3 captures or level 3",
+    palette: { bg: "#141f33", grassA: "#688848", grassB: "#54723a", treeA: "#566b8a", treeB: "#3f5272", water: "#4a67b8", pathA: "#bca681", pathB: "#9f8a67" },
+    encounterRate: 0.2,
+    isUnlocked: (state) => state.progress.captures >= 3 || state.progress.level >= 3,
     buildings: [
-      { id: "home-scale", name: "Guild Hall", x: 9, y: 11, color: "#5868d8", roof: "#4855ad", glyph: "G", action: "home" },
-      { id: "research", name: "Research Library", x: 5, y: 4, color: "#6c7b95", roof: "#516078", glyph: "L", action: "research" },
-      { id: "resume-scale", name: "Portfolio Studio", x: 10, y: 4, color: "#d16b4f", roof: "#b35539", glyph: "P", action: "resume" },
-      { id: "recruiter", name: "Recruiter Row", x: 16, y: 7, color: "#4aa17a", roof: "#39815f", glyph: "Q", action: "screen" },
-      { id: "apply-scale", name: "Apply Terminal", x: 3, y: 7, color: "#9b6cf0", roof: "#7a51c0", glyph: "A", action: "apply" },
-      { id: "interview-scale", name: "Case Arena", x: 7, y: 9, color: "#c9852d", roof: "#a56b24", glyph: "C", action: "interview" },
-      { id: "transit-scale", name: "Sky Rail", x: 12, y: 9, color: "#4aaac4", roof: "#34879c", glyph: "T", action: "transit" },
+      { id: "guild", label: "Guild Hall", glyph: "G", x: 9, y: 11, color: "#4a61b8", roof: "#344589", action: "home" },
+      { id: "research", label: "Research Library", glyph: "L", x: 5, y: 4, color: "#6b7da0", roof: "#53627c", action: "research" },
+      { id: "portfolio", label: "Portfolio Studio", glyph: "P", x: 10, y: 4, color: "#c45e49", roof: "#a04939", action: "resume" },
+      { id: "screen", label: "Recruiter Row", glyph: "Q", x: 16, y: 7, color: "#4e9f7a", roof: "#3d7e61", action: "screen" },
+      { id: "apply-scale", label: "Apply Terminal", glyph: "A", x: 3, y: 7, color: "#8f68d6", roof: "#704eb1", action: "apply" },
+      { id: "case", label: "Case Arena", glyph: "C", x: 7, y: 9, color: "#d48a2a", roof: "#ae6d1f", action: "interview" },
+      { id: "transit-scale", label: "Sky Rail", glyph: "T", x: 12, y: 9, color: "#55a9c6", roof: "#3e869f", action: "transit" },
+    ],
+    jobs: [
+      { id: "google-pm", company: "Google", role: "Senior Product Manager", url: actualJobLinks.google, location: "Mountain View", priority: "High", type: "Scale", emoji: "G", hp: 96, district: "scale" },
+      { id: "microsoft-pm", company: "Microsoft", role: "Principal PM", url: actualJobLinks.microsoft, location: "Seattle", priority: "High", type: "Platform", emoji: "⊞", hp: 95, district: "scale" },
+      { id: "stripe-pm", company: "Stripe", role: "Product Manager", url: actualJobLinks.stripe, location: "SF / Remote", priority: "High", type: "Payments", emoji: "S", hp: 98, district: "scale" },
+      { id: "databricks-pm", company: "Databricks", role: "PM, ML Platform", url: actualJobLinks.databricks, location: "San Francisco", priority: "Medium", type: "Data", emoji: "◧", hp: 94, district: "scale" },
+      { id: "atlassian-pm", company: "Atlassian", role: "Product Role", url: actualJobLinks.atlassian, location: "Remote", priority: "Medium", type: "Collaboration", emoji: "A", hp: 92, district: "scale" },
+      { id: "apple-pm", company: "Apple", role: "PM, Platform", url: actualJobLinks.apple, location: "Cupertino", priority: "Low", type: "Execution", emoji: "", hp: 99, district: "scale" },
     ],
   },
   {
     id: "summit",
-    name: "Summit Harbor",
-    subtitle: "High-stakes final runs",
+    name: "Indigo Offers",
+    subtitle: "Boss fights and offer castle",
     unlockText: "Unlocks after 2 interviews or level 5",
+    palette: { bg: "#1a1633", grassA: "#57699a", grassB: "#465380", treeA: "#7567a6", treeB: "#5b4d86", water: "#6752c8", pathA: "#af97c9", pathB: "#927bb2" },
+    encounterRate: 0.24,
     isUnlocked: (state) => state.progress.interviews >= 2 || state.progress.level >= 5,
     buildings: [
-      { id: "home-summit", name: "War Room", x: 9, y: 11, color: "#3d73a8", roof: "#315b85", glyph: "W", action: "home" },
-      { id: "research-summit", name: "Signal Observatory", x: 5, y: 4, color: "#7b88a8", roof: "#616d89", glyph: "O", action: "research" },
-      { id: "resume-summit", name: "Narrative Forge", x: 10, y: 4, color: "#ca5555", roof: "#a34242", glyph: "N", action: "resume" },
-      { id: "network-summit", name: "Founder Lounge", x: 16, y: 7, color: "#4e9b78", roof: "#3f7f62", glyph: "F", action: "network" },
-      { id: "screen-summit", name: "Exec Briefing", x: 3, y: 7, color: "#7e62d3", roof: "#624dac", glyph: "E", action: "screen" },
-      { id: "interview-summit", name: "Boss Arena", x: 7, y: 9, color: "#dd7b26", roof: "#b96418", glyph: "B", action: "interview" },
-      { id: "offer-summit", name: "Offer Castle", x: 12, y: 9, color: "#58b2b2", roof: "#438989", glyph: "O", action: "offer" },
+      { id: "war-room", label: "War Room", glyph: "W", x: 9, y: 11, color: "#466faa", roof: "#355587", action: "home" },
+      { id: "signal", label: "Signal Observatory", glyph: "O", x: 5, y: 4, color: "#7a6ca8", roof: "#61538a", action: "research" },
+      { id: "founder", label: "Founder Lounge", glyph: "F", x: 10, y: 4, color: "#bc5858", roof: "#954343", action: "network" },
+      { id: "exec", label: "Exec Briefing", glyph: "E", x: 16, y: 7, color: "#5b9f82", roof: "#467b65", action: "screen" },
+      { id: "boss", label: "Boss Arena", glyph: "B", x: 7, y: 9, color: "#da7d26", roof: "#b35f1a", action: "interview" },
+      { id: "offer", label: "Offer Castle", glyph: "O", x: 3, y: 7, color: "#59b6b4", roof: "#438d8c", action: "offer" },
+      { id: "transit-summit", label: "Sky Dock", glyph: "T", x: 12, y: 9, color: "#5877cd", roof: "#405ba2", action: "transit" },
+    ],
+    jobs: [
+      { id: "openai-pm", company: "OpenAI", role: "Product Manager, API Platform", url: actualJobLinks.openai, location: "San Francisco", priority: "High", type: "AI", emoji: "◎", hp: 106, district: "summit" },
+      { id: "anthropic-pm", company: "Anthropic", role: "Product Manager", url: actualJobLinks.anthropic, location: "San Francisco", priority: "High", type: "AI", emoji: "△", hp: 104, district: "summit" },
+      { id: "riot-pm", company: "Riot Games", role: "Senior PM, Live Services", url: actualJobLinks.riot, location: "Los Angeles", priority: "Medium", type: "Gaming", emoji: "⚔", hp: 102, district: "summit" },
+      { id: "roblox-pm", company: "Roblox", role: "Product Role", url: actualJobLinks.roblox, location: "San Mateo", priority: "Medium", type: "Gaming", emoji: "◈", hp: 101, district: "summit" },
+      { id: "nvidia-pm", company: "NVIDIA", role: "AI Product Role", url: actualJobLinks.nvidia, location: "Santa Clara", priority: "Medium", type: "AI", emoji: "⬡", hp: 103, district: "summit" },
     ],
   },
+];
+
+const companyArchetypes = [
+  { match: ["openai", "anthropic", "nvidia"], focus: "AI product judgment", prep: "Talk about model quality, developer adoption, and product tradeoffs under uncertainty." },
+  { match: ["riot", "roblox"], focus: "player and ecosystem product sense", prep: "Talk about retention loops, trust, community, and long-term engagement." },
+  { match: ["vercel", "linear", "supabase", "stripe", "databricks"], focus: "platform and developer empathy", prep: "Talk about APIs, workflow friction, DX, and measurable adoption." },
+  { match: ["google", "microsoft", "apple", "atlassian"], focus: "scale and cross-functional execution", prep: "Talk about prioritization, alignment, ambiguity, and crisp metric thinking." },
+  { match: ["figma", "notion"], focus: "product craft and UX judgment", prep: "Talk about user needs, product taste, collaboration, and quality details." },
 ];
 
 const defaultState = () => ({
   player: {
     name: "Trainer",
     targetRole: "Product Manager",
-    goal: "Land a role you are proud of",
+    goal: "Land a role I am proud of",
     x: 9,
     y: 13,
   },
@@ -155,25 +152,21 @@ const defaultState = () => ({
     level: 1,
     coins: 0,
     streak: 0,
+    captures: 0,
     applications: 0,
     interviews: 0,
     offers: 0,
-    tailored: 0,
-    networking: 0,
-    research: 0,
-    screens: 0,
-    battlesWon: 0,
+    wins: 0,
   },
   meta: {
     activeLeadId: null,
     nextLeadId: 1,
-    lastActionAt: null,
     currentDistrict: "starter",
   },
   resume: {
     text: "",
-    importedAt: null,
     sourceName: "",
+    importedAt: null,
     summary: "",
     signals: [],
     highlights: [],
@@ -183,42 +176,49 @@ const defaultState = () => ({
 
 let state = loadState();
 let scene = "title";
-let lastTime = 0;
-let moveCooldown = 0;
-const keys = {};
-let camera = { x: 0, y: 0 };
 let currentDialogue = null;
-let battleState = null;
+let encounterState = null;
+let lastTime = 0;
+let camera = { x: 0, y: 0 };
+
+const runtimePlayer = {
+  x: state.player.x,
+  y: state.player.y,
+  renderX: state.player.x,
+  renderY: state.player.y,
+  moving: false,
+  progress: 0,
+  fromX: state.player.x,
+  fromY: state.player.y,
+  toX: state.player.x,
+  toY: state.player.y,
+  moveDuration: 140,
+};
+
+const keys = {};
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 const titleScreen = document.getElementById("title-screen");
 const introModal = document.getElementById("intro-modal");
-const leadModal = document.getElementById("lead-modal");
 const resumeModal = document.getElementById("resume-modal");
+const leadModal = document.getElementById("lead-modal");
 const battleModal = document.getElementById("battle-modal");
 const journalPanel = document.getElementById("journal-panel");
 const dialogueBox = document.getElementById("dialogue-box");
 const dialogueSpeaker = document.getElementById("dialogue-speaker");
 const dialogueText = document.getElementById("dialogue-text");
 const dialogueActions = document.getElementById("dialogue-actions");
-
-const newGameBtn = document.getElementById("new-game-btn");
-const continueBtn = document.getElementById("continue-btn");
-const importResumeTitleBtn = document.getElementById("import-resume-title-btn");
-const openResumeModalBtn = document.getElementById("open-resume-modal-btn");
-const openResumeJournalBtn = document.getElementById("open-resume-journal-btn");
-const resetBtn = document.getElementById("reset-btn");
-const startSaveBtn = document.getElementById("start-save-btn");
-const quickAddBtn = document.getElementById("quick-add-btn");
-const deleteLeadBtn = document.getElementById("delete-lead-btn");
-const closeBattleBtn = document.getElementById("close-battle-btn");
-const saveResumeBtn = document.getElementById("save-resume-btn");
+const hintBar = document.getElementById("hint-bar");
 
 const playerNameInput = document.getElementById("player-name-input");
 const targetRoleInput = document.getElementById("target-role-input");
 const goalInput = document.getElementById("goal-input");
+const resumeFileInput = document.getElementById("resume-file-input");
+const resumeTextInput = document.getElementById("resume-text-input");
+const resumeStatus = document.getElementById("resume-status");
+
 const leadForm = document.getElementById("lead-form");
 const leadModalTitle = document.getElementById("lead-modal-title");
 const leadIdInput = document.getElementById("lead-id-input");
@@ -228,9 +228,6 @@ const locationInput = document.getElementById("location-input");
 const priorityInput = document.getElementById("priority-input");
 const urlInput = document.getElementById("url-input");
 const notesInput = document.getElementById("notes-input");
-const resumeFileInput = document.getElementById("resume-file-input");
-const resumeTextInput = document.getElementById("resume-text-input");
-const resumeStatus = document.getElementById("resume-status");
 
 function loadState() {
   try {
@@ -255,10 +252,9 @@ function loadState() {
 function normalizeLead(lead) {
   return {
     ...lead,
+    status: lead.status || "tracked",
     district: lead.district || "starter",
-    status: lead.status || "active",
     notes: lead.notes || "",
-    prepNotes: lead.prepNotes || [],
     steps: {
       researched: false,
       tailored: false,
@@ -275,20 +271,13 @@ function normalizeLead(lead) {
 }
 
 function saveState() {
+  state.player.x = runtimePlayer.x;
+  state.player.y = runtimePlayer.y;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-
-function hasSave() {
-  return state.leads.length > 0 || state.progress.xp > 0 || state.player.name !== "Trainer" || !!state.resume.text;
-}
-
 function currentDistrict() {
-  return districtDefs.find((district) => district.id === state.meta.currentDistrict) || districtDefs[0];
+  return districts.find((district) => district.id === state.meta.currentDistrict) || districts[0];
 }
 
 function currentBuildings() {
@@ -296,132 +285,23 @@ function currentBuildings() {
 }
 
 function unlockedDistricts() {
-  return districtDefs.filter((district) => district.isUnlocked(state));
+  return districts.filter((district) => district.isUnlocked(state));
 }
 
 function nextLockedDistrict() {
-  return districtDefs.find((district) => !district.isUnlocked(state));
+  return districts.find((district) => !district.isUnlocked(state));
 }
 
-function setDistrict(id) {
-  state.meta.currentDistrict = id;
-  state.player.x = 9;
-  state.player.y = 13;
-  saveState();
-  refreshChrome();
+function districtJobs(id = currentDistrict().id) {
+  return districts.find((district) => district.id === id)?.jobs || [];
 }
 
-function resetState() {
-  localStorage.removeItem(STORAGE_KEY);
-  state = defaultState();
-  scene = "title";
-  battleState = null;
-  hideDialogue();
-  hideJournal();
-  hideModal(leadModal);
-  hideModal(introModal);
-  hideModal(resumeModal);
-  hideModal(battleModal);
-  document.getElementById("hud").classList.remove("active");
-  refreshChrome();
-  syncTitleButtons();
-  titleScreen.classList.add("active");
+function hasCaptured(jobId) {
+  return state.leads.some((lead) => lead.sourceJobId === jobId);
 }
 
-function startWorld() {
-  scene = "world";
-  titleScreen.classList.remove("active");
-  document.getElementById("hud").classList.add("active");
-  refreshChrome();
-}
-
-function beginNewAdventure() {
-  playerNameInput.value = state.player.name === "Trainer" ? "" : state.player.name;
-  targetRoleInput.value = state.player.targetRole;
-  goalInput.value = state.player.goal;
-  showModal(introModal);
-}
-
-function createNewSave() {
-  state = defaultState();
-  state.player.name = (playerNameInput.value || "Trainer").trim();
-  state.player.targetRole = (targetRoleInput.value || "Product Manager").trim();
-  state.player.goal = (goalInput.value || "Land a role you are proud of").trim();
-  demoLeads.filter((lead) => lead.district === "starter").forEach((lead, index) => addLead(lead, index === 0));
-  state.progress.coins = 30;
-  state.progress.xp = 15;
-  updateLevelFromXp();
-  saveState();
-  hideModal(introModal);
-  startWorld();
-}
-
-function openLeadModal(leadId = null) {
-  const lead = leadId ? getLead(leadId) : null;
-  leadModalTitle.textContent = lead ? "Edit Lead" : "Add Lead";
-  leadIdInput.value = lead ? String(lead.id) : "";
-  companyInput.value = lead?.company || "";
-  roleInput.value = lead?.role || "";
-  locationInput.value = lead?.location || "";
-  priorityInput.value = lead?.priority || "High";
-  urlInput.value = lead?.url || "";
-  notesInput.value = lead?.notes || "";
-  deleteLeadBtn.classList.toggle("hidden", !lead);
-  showModal(leadModal);
-}
-
-function addLead(input, setActive = false) {
-  const id = state.meta.nextLeadId++;
-  const lead = normalizeLead({
-    id,
-    company: (input.company || "").trim(),
-    role: (input.role || "").trim(),
-    location: (input.location || "").trim(),
-    priority: input.priority || "Medium",
-    url: (input.url || "").trim(),
-    notes: (input.notes || "").trim(),
-    district: input.district || currentDistrict().id,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
-  state.leads.push(lead);
-  if (!state.meta.activeLeadId || setActive) state.meta.activeLeadId = id;
-  saveState();
-  refreshChrome();
-  return lead;
-}
-
-function updateLeadFromForm(event) {
-  event.preventDefault();
-  const payload = {
-    company: companyInput.value,
-    role: roleInput.value,
-    location: locationInput.value,
-    priority: priorityInput.value,
-    url: urlInput.value,
-    notes: notesInput.value,
-  };
-  const id = Number(leadIdInput.value);
-  if (id) {
-    const lead = getLead(id);
-    if (!lead) return;
-    Object.assign(lead, payload, { updatedAt: Date.now() });
-  } else {
-    addLead(payload, true);
-  }
-  saveState();
-  hideModal(leadModal);
-  refreshChrome();
-}
-
-function deleteLead() {
-  const id = Number(leadIdInput.value);
-  if (!id) return;
-  state.leads = state.leads.filter((lead) => lead.id !== id);
-  if (state.meta.activeLeadId === id) state.meta.activeLeadId = state.leads[0]?.id || null;
-  saveState();
-  hideModal(leadModal);
-  refreshChrome();
+function availableWildJobs() {
+  return districtJobs().filter((job) => !hasCaptured(job.id));
 }
 
 function getLead(id) {
@@ -452,95 +332,76 @@ function getLeadStage(lead) {
 }
 
 function getNextObjective(lead) {
-  if (lead.steps.offered) return "Celebrate and negotiate thoughtfully.";
-  if (lead.steps.rejected) return "Closed out. Capture lessons and move on.";
-  if (!lead.steps.researched) return "Visit Research Library to understand the company better.";
-  if (!lead.steps.tailored) return "Visit Resume Forge to tailor your story.";
-  if (!lead.steps.networked) return "Visit Network Cafe to send targeted outreach.";
-  if (!lead.steps.screened) return "Visit Recruiter Row or Exec Briefing to prep screening calls.";
-  if (!lead.steps.applied) return "Visit Application Gate to submit.";
-  if (!lead.steps.followedUp) return "Return to Application Gate for follow-up.";
-  if (!lead.steps.interviewing) return "Win the prep battle at the local interview arena.";
-  return "Visit Offer Castle when the loop resolves.";
-}
-
-function applyReward(type) {
-  const reward = actionRewards[type];
-  if (!reward) return;
-  state.progress.xp += reward.xp;
-  state.progress.coins += reward.coins;
-  state.progress.streak += 1;
-  if (type === "researched") state.progress.research += 1;
-  if (type === "tailored") state.progress.tailored += 1;
-  if (type === "networked") state.progress.networking += 1;
-  if (type === "screened") state.progress.screens += 1;
-  if (type === "applied") state.progress.applications += 1;
-  if (type === "interviewing") {
-    state.progress.interviews += 1;
-    state.progress.battlesWon += 1;
-  }
-  if (type === "offered") state.progress.offers += 1;
-  state.meta.lastActionAt = Date.now();
-  updateLevelFromXp();
-}
-
-function updateLevelFromXp() {
-  while (state.progress.xp >= xpForLevel(state.progress.level)) {
-    state.progress.xp -= xpForLevel(state.progress.level);
-    state.progress.level += 1;
-  }
+  if (lead.steps.offered) return "Offer won. Celebrate and negotiate thoughtfully.";
+  if (lead.steps.rejected) return "Closed out. Capture notes and keep the run alive.";
+  if (!lead.steps.researched) return "Visit the research building for this district.";
+  if (!lead.steps.tailored) return "Tailor your story at Resume Forge.";
+  if (!lead.steps.networked) return "Visit Network Cafe or Founder Lounge.";
+  if (!lead.steps.screened) return "Prep your recruiter screen in the screen building.";
+  if (!lead.steps.applied) return "Submit the real application at the gate.";
+  if (!lead.steps.followedUp) return "Return to the gate and log a follow-up.";
+  if (!lead.steps.interviewing) return "Win the interview battle in the arena.";
+  return "Take the lead to Offer Castle when it resolves.";
 }
 
 function xpForLevel(level) {
   return level * 100;
 }
 
-function companyProfile(lead) {
-  const name = `${lead.company} ${lead.role}`.toLowerCase();
-  return companyArchetypes.find((entry) => entry.match.some((term) => name.includes(term))) || {
-    focus: "Structured product thinking",
-    prep: "Expect product sense, prioritization, communication, and execution questions.",
+function applyXp(amount) {
+  state.progress.xp += amount;
+  while (state.progress.xp >= xpForLevel(state.progress.level)) {
+    state.progress.xp -= xpForLevel(state.progress.level);
+    state.progress.level += 1;
+  }
+}
+
+function companyProfile(entity) {
+  const haystack = `${entity.company} ${entity.role}`.toLowerCase();
+  return companyArchetypes.find((entry) => entry.match.some((term) => haystack.includes(term))) || {
+    focus: "product judgment and execution",
+    prep: "Expect product sense, prioritization, metrics, and communication questions.",
   };
 }
 
-function resumeSignals() {
-  return state.resume.signals || [];
+function strongestResumeSignals(limit = 3) {
+  return (state.resume.signals || []).slice(0, limit).map((signal) => signal.label);
 }
 
-function strongestResumeSignals(limit = 3) {
-  return resumeSignals().slice(0, limit).map((signal) => signal.label);
+function buildLeadQuests(lead) {
+  const profile = companyProfile(lead);
+  const signals = strongestResumeSignals(2);
+  return [
+    { title: "Research", text: `Understand ${lead.company}'s users, product bets, and likely metrics.`, done: lead.steps.researched },
+    { title: "Story Match", text: state.resume.text ? `Connect your ${signals[0] || "product"} strengths to ${profile.focus}.` : "Import your resume to tailor the story better.", done: lead.steps.tailored },
+    { title: "Warm Intro", text: `Find one human path into ${lead.company}: recruiter, teammate, founder, or creator.`, done: lead.steps.networked },
+    { title: "Screen Prep", text: `Prepare a crisp answer for why ${lead.company}, why this role, and why now.`, done: lead.steps.screened },
+    { title: "Boss Prep", text: profile.prep, done: lead.steps.interviewing },
+  ];
 }
 
 function detectResumeIntel(text) {
   const normalized = text.toLowerCase();
   const signals = keywordSignals
     .map((signal) => ({
-      key: signal.key,
       label: signal.label,
       score: signal.tests.reduce((sum, test) => sum + (normalized.includes(test) ? 1 : 0), 0),
     }))
     .filter((signal) => signal.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  const sentences = text
+  const highlights = text
     .replace(/\s+/g, " ")
     .split(/(?<=[.!?])\s+/)
     .map((line) => line.trim())
-    .filter(Boolean);
-
-  const highlights = sentences
-    .filter((line) => /\b(led|shipped|grew|launched|built|owned|improved|scaled)\b/i.test(line))
+    .filter((line) => /\b(led|launched|shipped|grew|built|owned|scaled)\b/i.test(line))
     .slice(0, 3);
-
-  const summaryBits = [];
-  if (signals.length) summaryBits.push(`Signals: ${signals.slice(0, 4).map((signal) => signal.label).join(", ")}`);
-  if (highlights.length) summaryBits.push(`Impact: ${highlights[0]}`);
 
   return {
     text,
-    importedAt: Date.now(),
     sourceName: resumeFileInput.files[0]?.name || "Pasted resume",
-    summary: summaryBits.join(" | ") || "Resume imported.",
+    importedAt: Date.now(),
+    summary: signals.length ? `Top signals: ${signals.slice(0, 4).map((signal) => signal.label).join(", ")}` : "Resume imported.",
     signals,
     highlights,
   };
@@ -575,253 +436,43 @@ async function saveResumeIntel() {
     }
     state.resume = detectResumeIntel(text);
     const firstLine = text.split("\n").map((line) => line.trim()).find(Boolean);
-    if (firstLine && firstLine.length < 35 && !/\d/.test(firstLine) && state.player.name === "Trainer") {
+    if (firstLine && firstLine.length < 32 && !/\d/.test(firstLine) && state.player.name === "Trainer") {
       state.player.name = firstLine;
     }
     saveState();
     refreshChrome();
-    resumeStatus.textContent = "Resume intel saved. Quests and interview battles now adapt to your background.";
+    resumeStatus.textContent = "Resume intel saved. Encounters, quests, and boss fights now adapt to your background.";
   } catch (error) {
     console.error(error);
     resumeStatus.textContent = "Could not parse that file. Try pasting the text instead.";
   }
 }
 
-function buildLeadQuests(lead) {
-  const profile = companyProfile(lead);
-  const skills = strongestResumeSignals(3);
-  return [
-    { title: "Research", text: `Understand ${lead.company}'s business, users, and the role's likely metrics.`, done: lead.steps.researched },
-    { title: "Story Match", text: state.resume.text ? `Tie your ${skills[0] || "product"} background to ${profile.focus.toLowerCase()}.` : "Import your resume to tailor this story.", done: lead.steps.tailored },
-    { title: "Warm Intro", text: `Find one teammate, recruiter, or creator linked to ${lead.company}.`, done: lead.steps.networked },
-    { title: "Screen Prep", text: `Prepare a tight recruiter-screen answer for why ${lead.company} and why now.`, done: lead.steps.screened },
-    { title: "Interview Win Condition", text: profile.prep, done: lead.steps.interviewing },
-  ];
-}
-
-function progressLead(step) {
-  const lead = getActiveLead();
-  if (!lead) {
-    showCoachDialogue("No active lead yet.", [
-      { label: "Open journal", onSelect: showJournal },
-      { label: "Create a lead", onSelect: () => openLeadModal() },
-    ]);
-    return;
-  }
-
-  if (lead.status !== "active" && step !== "offered") {
-    showCoachDialogue(`${lead.company} is already closed out. Pick a different lead in your journal.`);
-    return;
-  }
-
-  const blockers = {
-    researched: () => null,
-    tailored: () => (!lead.steps.researched ? "Research the company first." : null),
-    networked: () => (!lead.steps.tailored ? "Tailor your resume first." : null),
-    screened: () => (!lead.steps.networked ? "Warm up the lead with outreach first." : null),
-    applied: () => (!lead.steps.screened ? "Prep the recruiter screen first." : null),
-    followedUp: () => (!lead.steps.applied ? "Submit the application first." : null),
-    interviewing: () => (!lead.steps.followedUp ? "Send the follow-up before the battle prep stage." : null),
-    offered: () => (!lead.steps.interviewing ? "Win the interview battle before logging the final outcome." : null),
-  };
-
-  const block = blockers[step]?.();
-  if (block) {
-    showCoachDialogue(block);
-    return;
-  }
-
-  if (step === "interviewing") {
-    startInterviewBattle(lead);
-    return;
-  }
-
-  if (step === "offered") {
-    showDialogue({
-      speaker: "Offer Castle",
-      text: `How did ${lead.company} resolve?`,
-      actions: [
-        { label: "Mark offer won", onSelect: () => finishLead("offered") },
-        { label: "Mark rejected", onSelect: () => finishLead("rejected") },
-        { label: "Not yet", onSelect: hideDialogue },
-      ],
-    });
-    return;
-  }
-
-  if (lead.steps[step]) {
-    showCoachDialogue(`${actionRewards[step].label} is already logged for ${lead.company}.`);
-    return;
-  }
-
-  lead.steps[step] = true;
-  lead.updatedAt = Date.now();
-  applyReward(step);
+function captureLeadFromEncounter(job) {
+  const lead = normalizeLead({
+    id: state.meta.nextLeadId++,
+    sourceJobId: job.id,
+    company: job.company,
+    role: job.role,
+    url: job.url,
+    location: job.location,
+    priority: job.priority,
+    district: job.district,
+    type: job.type,
+    emoji: job.emoji,
+    notes: "",
+    status: "tracked",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+  state.leads.push(lead);
+  state.meta.activeLeadId = lead.id;
+  state.progress.captures += 1;
+  state.progress.coins += 8;
+  applyXp(18);
   saveState();
   refreshChrome();
-  showCoachDialogue(`${actionRewards[step].label}. ${lead.company} is now at the ${stageLabels[getLeadStage(lead)]} stage.`, [
-    { label: "Keep moving", onSelect: hideDialogue },
-    ...(lead.url ? [{ label: "Open listing", onSelect: () => window.open(lead.url, "_blank", "noopener") }] : []),
-  ]);
-}
-
-function finishLead(outcome) {
-  const lead = getActiveLead();
-  if (!lead) return;
-  if (outcome === "offered") {
-    lead.steps.offered = true;
-    lead.status = "won";
-    applyReward("offered");
-    showCoachDialogue(`Offer logged for ${lead.company}. Big win. Capture what worked so we can repeat it.`);
-  } else {
-    lead.steps.rejected = true;
-    lead.status = "closed";
-    state.progress.streak = 0;
-    showCoachDialogue(`${lead.company} was marked closed. That's okay. Take the lesson and keep the pipeline alive.`);
-  }
-  lead.updatedAt = Date.now();
-  saveState();
-  refreshChrome();
-}
-
-function buildBattleQuestions(lead) {
-  const profile = companyProfile(lead);
-  const skills = strongestResumeSignals(2);
-  const best = skills[0] || "product execution";
-  const backup = skills[1] || "cross-functional leadership";
-  return [
-    {
-      prompt: `Why ${lead.company} and why this ${lead.role} role?`,
-      answers: [
-        { text: `Connect your ${best} background to ${profile.focus.toLowerCase()} and mention one real reason this company matters to you.`, score: 28, feedback: "Strong and specific motivation." },
-        { text: "Say the brand is exciting and you want to grow a lot here.", score: 12, feedback: "Positive, but still generic." },
-        { text: "Focus on title and compensation first.", score: 4, feedback: "The panel wants deeper motivation." },
-      ],
-    },
-    {
-      prompt: `Tell me about a product win that proves you can do this job.`,
-      answers: [
-        { text: `Use a STAR-style story with metrics, ownership, and a lesson tied to ${best}.`, score: 30, feedback: "Clear evidence and strong structure." },
-        { text: "Describe a team project broadly without quantifying impact.", score: 10, feedback: "Needs sharper ownership and results." },
-        { text: "Stay high-level because details are hard to remember.", score: 5, feedback: "Specificity matters here." },
-      ],
-    },
-    {
-      prompt: `What would your first 90 days look like here?`,
-      answers: [
-        { text: `Listen, map users and metrics, find quick wins, then prioritize with stakeholders using your ${backup} strength.`, score: 26, feedback: "Thoughtful, grounded, and realistic." },
-        { text: "Ship a huge feature fast to prove impact immediately.", score: 8, feedback: "Too rushed. Missing context gathering." },
-        { text: "Wait until the roadmap is perfectly clear before moving.", score: 3, feedback: "This role needs initiative." },
-      ],
-    },
-  ];
-}
-
-function startInterviewBattle(lead) {
-  battleState = {
-    leadId: lead.id,
-    turn: 0,
-    playerHp: 100,
-    enemyHp: 100,
-    questions: buildBattleQuestions(lead),
-    log: [`${lead.company} enters the arena. Beat the panel with relevance, structure, and evidence.`],
-    complete: false,
-  };
-  renderBattle();
-  showModal(battleModal);
-}
-
-function renderBattle() {
-  if (!battleState) return;
-  const lead = getLead(battleState.leadId);
-  const question = battleState.questions[battleState.turn];
-  document.getElementById("battle-player-name").textContent = state.player.name;
-  document.getElementById("battle-player-role").textContent = state.player.targetRole;
-  document.getElementById("battle-enemy-name").textContent = lead.company;
-  document.getElementById("battle-enemy-role").textContent = lead.role;
-  document.getElementById("battle-player-hp").style.width = `${Math.max(0, battleState.playerHp)}%`;
-  document.getElementById("battle-enemy-hp").style.width = `${Math.max(0, battleState.enemyHp)}%`;
-  document.getElementById("battle-log").textContent = battleState.log[battleState.log.length - 1];
-  document.getElementById("battle-question").textContent = question ? question.prompt : "Battle complete.";
-
-  const answers = document.getElementById("battle-answers");
-  answers.innerHTML = "";
-  if (!battleState.complete && question) {
-    question.answers.forEach((answer) => {
-      const button = document.createElement("button");
-      button.className = "pixel-btn primary";
-      button.textContent = answer.text;
-      button.onclick = () => resolveBattleTurn(answer);
-      answers.appendChild(button);
-    });
-  }
-
-  const actions = document.getElementById("battle-actions");
-  actions.innerHTML = "";
-  const retreatBtn = document.createElement("button");
-  retreatBtn.className = "pixel-btn ghost small";
-  retreatBtn.textContent = battleState.complete ? "Close" : "Retreat";
-  retreatBtn.onclick = closeBattle;
-  actions.appendChild(retreatBtn);
-}
-
-function resolveBattleTurn(answer) {
-  if (!battleState || battleState.complete) return;
-  const lead = getLead(battleState.leadId);
-  const enemyHit = Math.max(8, 30 - answer.score);
-  battleState.enemyHp -= answer.score;
-  battleState.playerHp -= enemyHit;
-  battleState.log.push(`${answer.feedback} ${lead.company} pushes back for ${enemyHit} damage.`);
-
-  if (battleState.enemyHp <= 0) {
-    battleState.complete = true;
-    lead.steps.interviewing = true;
-    lead.updatedAt = Date.now();
-    lead.prepNotes = buildLeadQuests(lead).map((quest) => quest.text);
-    applyReward("interviewing");
-    saveState();
-    refreshChrome();
-    battleState.log.push(`Victory. ${lead.company}'s panel is convinced you are interview-ready.`);
-    renderBattle();
-    showCoachDialogue(`You won the prep battle for ${lead.company}. Your interview stage is now unlocked.`);
-    return;
-  }
-
-  if (battleState.playerHp <= 0) {
-    battleState.complete = true;
-    state.progress.streak = Math.max(0, state.progress.streak - 1);
-    saveState();
-    refreshChrome();
-    battleState.log.push("You lost the round. Refine your stories and challenge the arena again.");
-    renderBattle();
-    return;
-  }
-
-  battleState.turn += 1;
-  if (battleState.turn >= battleState.questions.length) {
-    battleState.complete = true;
-    if (battleState.enemyHp > battleState.playerHp) {
-      battleState.log.push("The panel still has doubts. Re-run the battle after tightening your stories.");
-    } else {
-      lead.steps.interviewing = true;
-      lead.updatedAt = Date.now();
-      lead.prepNotes = buildLeadQuests(lead).map((quest) => quest.text);
-      applyReward("interviewing");
-      saveState();
-      refreshChrome();
-      battleState.log.push(`Narrow win. ${lead.company} is satisfied with your prep quality.`);
-    }
-  }
-  renderBattle();
-}
-
-function closeBattle() {
-  hideModal(battleModal);
-  battleState = null;
-}
-
-function showCoachDialogue(text, actions = [{ label: "Close", onSelect: hideDialogue }]) {
-  showDialogue({ speaker: guideNpc.name, text, actions });
+  return lead;
 }
 
 function showDialogue(config) {
@@ -831,7 +482,7 @@ function showDialogue(config) {
   dialogueActions.innerHTML = "";
   config.actions.forEach((action) => {
     const button = document.createElement("button");
-    button.className = "pixel-btn primary small";
+    button.className = `pixel-btn ${action.ghost ? "ghost" : "primary"} small`;
     button.textContent = action.label;
     button.onclick = () => {
       if (action.close !== false) hideDialogue();
@@ -845,6 +496,10 @@ function showDialogue(config) {
 function hideDialogue() {
   currentDialogue = null;
   dialogueBox.classList.add("hidden");
+}
+
+function showCoach(text, actions = [{ label: "Close", onSelect: hideDialogue }]) {
+  showDialogue({ speaker: "Coach Byte", text, actions });
 }
 
 function showModal(modal) {
@@ -864,46 +519,36 @@ function hideJournal() {
   journalPanel.classList.add("hidden");
 }
 
-function syncTitleButtons() {
-  continueBtn.disabled = !hasSave();
-  continueBtn.style.opacity = hasSave() ? "1" : "0.45";
-}
-
 function refreshChrome() {
-  syncHud();
-  renderSummary();
-  renderResumeSummary();
-  renderLeadList();
-  renderQuestBoard();
-  const locked = nextLockedDistrict();
-  document.getElementById("hint-bar").textContent = locked
-    ? `${currentDistrict().name} · ${currentDistrict().subtitle}. Next district: ${locked.name} (${locked.unlockText}).`
-    : `${currentDistrict().name} · ${currentDistrict().subtitle}. All districts unlocked.`;
-  syncTitleButtons();
-}
-
-function syncHud() {
   const activeLead = getActiveLead();
+  const locked = nextLockedDistrict();
   document.getElementById("hud-name").textContent = `${state.player.name} · ${currentDistrict().name}`;
   document.getElementById("hud-level").textContent = `Lv.${state.progress.level}`;
   document.getElementById("hud-xp").textContent = `XP ${state.progress.xp} / ${xpForLevel(state.progress.level)}`;
   document.getElementById("hud-coins").textContent = `Coins ${state.progress.coins}`;
-  document.getElementById("hud-streak").textContent = `Streak ${state.progress.streak}`;
+  document.getElementById("hud-streak").textContent = `Captures ${state.progress.captures}`;
   document.getElementById("hud-active-lead").textContent = activeLead ? `Active: ${activeLead.company}` : "No active lead";
+  hintBar.textContent = locked
+    ? `${currentDistrict().name}: ${currentDistrict().subtitle}. Next district: ${locked.name} (${locked.unlockText}). Controls: arrows/WASD move, Space interact, J journal.`
+    : `${currentDistrict().name}: ${currentDistrict().subtitle}. All districts unlocked. Controls: arrows/WASD move, Space interact, J journal.`;
+  renderSummary();
+  renderResumeSummary();
+  renderLeadList();
+  renderQuestBoard();
+  syncTitleButtons();
 }
 
 function renderSummary() {
   const summary = document.getElementById("summary-grid");
   summary.innerHTML = "";
-  const stats = [
+  [
     { label: "District", value: currentDistrict().name },
-    { label: "Target Role", value: state.player.targetRole },
+    { label: "Captures", value: String(state.progress.captures) },
     { label: "Applications", value: String(state.progress.applications) },
     { label: "Interviews", value: String(state.progress.interviews) },
     { label: "Offers", value: String(state.progress.offers) },
-    { label: "Districts Unlocked", value: String(unlockedDistricts().length) },
-  ];
-  stats.forEach((item) => {
+    { label: "Target Role", value: state.player.targetRole },
+  ].forEach((item) => {
     const card = document.createElement("div");
     card.className = "stat-card";
     card.innerHTML = `<strong>${item.label}</strong><p>${item.value}</p>`;
@@ -914,14 +559,13 @@ function renderSummary() {
 function renderResumeSummary() {
   const container = document.getElementById("resume-summary");
   if (!state.resume.text) {
-    container.innerHTML = "<strong>No resume intel yet</strong><p>Import your resume and the game will tailor quests and interview battles to your background.</p>";
+    container.innerHTML = "<strong>No resume intel yet</strong><p>Import your resume to boost tailoring, networking, and encounter power.</p>";
     return;
   }
-  const skills = strongestResumeSignals(4);
   container.innerHTML = `
     <strong>${state.resume.sourceName || "Resume imported"}</strong>
-    <p>${state.resume.summary || "Resume intel ready."}</p>
-    <div class="resume-skill-list">${skills.map((skill) => `<span class="badge">${skill}</span>`).join("") || '<span class="inline-note">No strong signals detected yet.</span>'}</div>
+    <p>${state.resume.summary}</p>
+    <div class="resume-skill-list">${strongestResumeSignals(4).map((signal) => `<span class="badge">${signal}</span>`).join("")}</div>
   `;
 }
 
@@ -929,396 +573,701 @@ function renderLeadList() {
   const container = document.getElementById("lead-list");
   container.innerHTML = "";
   if (!state.leads.length) {
-    container.innerHTML = `<div class="quest-card"><strong>No leads yet</strong><p>Add a company to start the loop.</p></div>`;
+    container.innerHTML = "<div class=\"quest-card\"><strong>No captured jobmon yet</strong><p>Walk through tall grass and throw an application packet to capture your first lead.</p></div>";
     return;
   }
-
   [...state.leads]
     .sort((a, b) => ({ High: 0, Medium: 1, Low: 2 }[a.priority] - { High: 0, Medium: 1, Low: 2 }[b.priority] || b.updatedAt - a.updatedAt))
     .forEach((lead) => {
-      const isActive = lead.id === state.meta.activeLeadId;
-      const quests = buildLeadQuests(lead).slice(0, 2);
+      const active = lead.id === state.meta.activeLeadId;
       const card = document.createElement("div");
       card.className = "lead-card";
       card.innerHTML = `
         <div class="lead-card-header">
           <div>
-            <strong>${lead.company}</strong>
+            <strong>${lead.emoji || "◉"} ${lead.company}</strong>
             <p>${lead.role}</p>
           </div>
           <span class="badge ${lead.priority.toLowerCase()}">${lead.priority}</span>
         </div>
-        <p>${lead.location || "Location TBD"} · ${lead.district}</p>
-        <p>Stage: ${stageLabels[getLeadStage(lead)]}</p>
+        <p>${lead.location || "Location TBD"} · ${stageLabels[getLeadStage(lead)]}</p>
         <p>${getNextObjective(lead)}</p>
-        <div class="quest-checklist">${quests.map((quest) => `<span class="badge">${quest.title}</span>`).join("")}</div>
         <div class="lead-card-actions"></div>
       `;
       const actions = card.querySelector(".lead-card-actions");
-
       const activeBtn = document.createElement("button");
-      activeBtn.className = `pixel-btn ${isActive ? "primary" : "ghost"} small`;
-      activeBtn.textContent = isActive ? "Active Lead" : "Set Active";
+      activeBtn.className = `pixel-btn ${active ? "primary" : "ghost"} small`;
+      activeBtn.textContent = active ? "Active" : "Set Active";
       activeBtn.onclick = () => setActiveLead(lead.id);
       actions.appendChild(activeBtn);
-
+      const intelBtn = document.createElement("button");
+      intelBtn.className = "pixel-btn ghost small";
+      intelBtn.textContent = "Quest Intel";
+      intelBtn.onclick = () => showLeadIntel(lead);
+      actions.appendChild(intelBtn);
+      const linkBtn = document.createElement("button");
+      linkBtn.className = "pixel-btn ghost small";
+      linkBtn.textContent = "Open Job";
+      linkBtn.onclick = () => window.open(lead.url, "_blank", "noopener");
+      actions.appendChild(linkBtn);
       const editBtn = document.createElement("button");
       editBtn.className = "pixel-btn ghost small";
       editBtn.textContent = "Edit";
       editBtn.onclick = () => openLeadModal(lead.id);
       actions.appendChild(editBtn);
-
-      const questBtn = document.createElement("button");
-      questBtn.className = "pixel-btn ghost small";
-      questBtn.textContent = "Quest Intel";
-      questBtn.onclick = () => showLeadQuestDialogue(lead);
-      actions.appendChild(questBtn);
-
-      if (lead.url) {
-        const linkBtn = document.createElement("button");
-        linkBtn.className = "pixel-btn ghost small";
-        linkBtn.textContent = "Open Link";
-        linkBtn.onclick = () => window.open(lead.url, "_blank", "noopener");
-        actions.appendChild(linkBtn);
-      }
-
       container.appendChild(card);
     });
-}
-
-function showLeadQuestDialogue(lead) {
-  const quests = buildLeadQuests(lead);
-  showDialogue({
-    speaker: `${lead.company} Quest Intel`,
-    text: quests.map((quest, index) => `${index + 1}. ${quest.title}: ${quest.text}`).join(" "),
-    actions: [
-      { label: "Set Active", onSelect: () => setActiveLead(lead.id) },
-      { label: "Close", onSelect: hideDialogue },
-    ],
-  });
 }
 
 function renderQuestBoard() {
   const board = document.getElementById("quest-board");
   board.innerHTML = "";
   const activeLead = getActiveLead();
-  const quests = [];
-
-  if (activeLead) {
-    buildLeadQuests(activeLead).forEach((quest) => {
-      quests.push({ title: `${quest.done ? "Done" : "Quest"}: ${quest.title}`, description: quest.text });
-    });
-  } else {
-    quests.push({ title: "No active lead", description: "Open the roster and set a lead active so the buildings know which company run you are on." });
-  }
-
-  const locked = nextLockedDistrict();
-  quests.push({ title: "Current District", description: `${currentDistrict().name}: ${currentDistrict().subtitle}` });
-  if (locked) quests.push({ title: "Next Unlock", description: `${locked.name} unlocks when ${locked.unlockText.toLowerCase()}.` });
-  if (state.resume.text) quests.push({ title: "Resume Power-Up", description: `Lean on ${strongestResumeSignals(3).join(", ") || "your strongest work"} in your stories.` });
-
+  const quests = activeLead
+    ? buildLeadQuests(activeLead)
+    : [{ title: "No Active Lead", text: "Capture a job in the grass and set it active in the journal.", done: false }];
   quests.forEach((quest) => {
     const card = document.createElement("div");
     card.className = "quest-card";
-    card.innerHTML = `<strong>${quest.title}</strong><p>${quest.description}</p>`;
+    card.innerHTML = `<strong>${quest.done ? "Done" : "Quest"}: ${quest.title}</strong><p>${quest.text}</p>`;
     board.appendChild(card);
   });
+  const locked = nextLockedDistrict();
+  if (locked) {
+    const card = document.createElement("div");
+    card.className = "quest-card";
+    card.innerHTML = `<strong>District Unlock</strong><p>${locked.name}: ${locked.unlockText}</p>`;
+    board.appendChild(card);
+  }
+}
+
+function syncTitleButtons() {
+  const canContinue = state.leads.length > 0 || state.progress.captures > 0 || state.progress.xp > 0 || !!state.resume.text;
+  document.getElementById("continue-btn").disabled = !canContinue;
+  document.getElementById("continue-btn").style.opacity = canContinue ? "1" : "0.45";
+}
+
+function openLeadModal(leadId = null) {
+  const lead = leadId ? getLead(leadId) : null;
+  leadModalTitle.textContent = lead ? "Edit Lead" : "Add Lead";
+  leadIdInput.value = lead ? String(lead.id) : "";
+  companyInput.value = lead?.company || "";
+  roleInput.value = lead?.role || "";
+  locationInput.value = lead?.location || "";
+  priorityInput.value = lead?.priority || "High";
+  urlInput.value = lead?.url || "";
+  notesInput.value = lead?.notes || "";
+  document.getElementById("delete-lead-btn").classList.toggle("hidden", !lead);
+  showModal(leadModal);
+}
+
+function updateLeadFromForm(event) {
+  event.preventDefault();
+  const id = Number(leadIdInput.value);
+  if (id) {
+    const lead = getLead(id);
+    if (!lead) return;
+    Object.assign(lead, {
+      company: companyInput.value.trim(),
+      role: roleInput.value.trim(),
+      location: locationInput.value.trim(),
+      priority: priorityInput.value,
+      url: urlInput.value.trim(),
+      notes: notesInput.value.trim(),
+      updatedAt: Date.now(),
+    });
+  } else {
+    const lead = normalizeLead({
+      id: state.meta.nextLeadId++,
+      company: companyInput.value.trim(),
+      role: roleInput.value.trim(),
+      location: locationInput.value.trim(),
+      priority: priorityInput.value,
+      url: urlInput.value.trim(),
+      notes: notesInput.value.trim(),
+      district: currentDistrict().id,
+      emoji: "◉",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    state.leads.push(lead);
+    state.meta.activeLeadId = lead.id;
+  }
+  saveState();
+  hideModal(leadModal);
+  refreshChrome();
+}
+
+function deleteLead() {
+  const id = Number(leadIdInput.value);
+  if (!id) return;
+  state.leads = state.leads.filter((lead) => lead.id !== id);
+  if (state.meta.activeLeadId === id) state.meta.activeLeadId = state.leads[0]?.id || null;
+  saveState();
+  hideModal(leadModal);
+  refreshChrome();
 }
 
 function tileAt(x, y) {
   if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return "T";
-  return mapRows[y][x];
+  return worldMap[y][x];
 }
 
-function tileSolid(char) {
-  return char === "T" || char === "~";
+function isPassable(x, y) {
+  const tile = tileAt(x, y);
+  return tile !== "T" && tile !== "~" && !currentBuildings().some((building) => building.x === x && building.y === y);
 }
 
-function isBuildingTile(x, y) {
-  return currentBuildings().some((building) => building.x === x && building.y === y);
+function isTallGrass(x, y) {
+  return tileAt(x, y) === "G";
 }
 
-function update(dt) {
-  if (scene !== "world") return;
-  if (
-    currentDialogue ||
-    battleState ||
-    !leadModal.classList.contains("hidden") ||
-    !introModal.classList.contains("hidden") ||
-    !resumeModal.classList.contains("hidden") ||
-    !journalPanel.classList.contains("hidden")
-  ) return;
+function tryMove(dx, dy) {
+  if (runtimePlayer.moving || currentDialogue || encounterState || !allOverlaysClosed()) return;
+  const nx = runtimePlayer.x + dx;
+  const ny = runtimePlayer.y + dy;
+  if (!isPassable(nx, ny)) return;
+  runtimePlayer.moving = true;
+  runtimePlayer.progress = 0;
+  runtimePlayer.fromX = runtimePlayer.x;
+  runtimePlayer.fromY = runtimePlayer.y;
+  runtimePlayer.toX = nx;
+  runtimePlayer.toY = ny;
+}
 
-  moveCooldown -= dt;
-  if (moveCooldown > 0) return;
-
-  let dx = 0;
-  let dy = 0;
-  if (keys.ArrowLeft || keys.a) dx = -1;
-  else if (keys.ArrowRight || keys.d) dx = 1;
-  else if (keys.ArrowUp || keys.w) dy = -1;
-  else if (keys.ArrowDown || keys.s) dy = 1;
-
-  if (!dx && !dy) return;
-
-  const nx = state.player.x + dx;
-  const ny = state.player.y + dy;
-  if (!tileSolid(tileAt(nx, ny)) && !isBuildingTile(nx, ny)) {
-    state.player.x = nx;
-    state.player.y = ny;
-    saveState();
+function finishMove() {
+  runtimePlayer.moving = false;
+  runtimePlayer.x = runtimePlayer.toX;
+  runtimePlayer.y = runtimePlayer.toY;
+  runtimePlayer.renderX = runtimePlayer.x;
+  runtimePlayer.renderY = runtimePlayer.y;
+  saveState();
+  if (isTallGrass(runtimePlayer.x, runtimePlayer.y) && Math.random() < currentDistrict().encounterRate) {
+    startWildEncounter();
   }
-  moveCooldown = 130;
 }
 
-function interact() {
-  if (scene !== "world") return;
-  if (!leadModal.classList.contains("hidden") || !introModal.classList.contains("hidden") || !resumeModal.classList.contains("hidden")) return;
+function startWildEncounter() {
+  const wildPool = availableWildJobs();
+  if (!wildPool.length) {
+    showCoach("This district's tall grass is quiet. You already caught every seeded lead here.");
+    return;
+  }
+  const job = structuredClone(wildPool[Math.floor(Math.random() * wildPool.length)]);
+  encounterState = {
+    kind: "wild",
+    title: "Wild Encounter",
+    subtitle: `A wild ${job.company} role appeared in the grass.`,
+    enemy: job,
+    enemyHp: job.hp,
+    playerHp: 100,
+    captureBonus: 0,
+    log: `You found ${job.company} ${job.role}. Weaken it, then throw an application packet to capture the lead.`,
+  };
+  renderEncounter();
+  showModal(battleModal);
+}
 
-  const targets = [
-    { x: state.player.x + 1, y: state.player.y },
-    { x: state.player.x - 1, y: state.player.y },
-    { x: state.player.x, y: state.player.y + 1 },
-    { x: state.player.x, y: state.player.y - 1 },
-  ];
+function startInterviewEncounter(lead) {
+  const profile = companyProfile(lead);
+  encounterState = {
+    kind: "interview",
+    title: "Interview Boss Fight",
+    subtitle: `${lead.company} is testing your ${profile.focus}.`,
+    enemy: lead,
+    enemyHp: 100,
+    playerHp: 100,
+    turn: 0,
+    questions: [
+      {
+        prompt: `Why ${lead.company} and why this role right now?`,
+        answers: [
+          { text: `Tie your background to ${profile.focus} and mention one real reason this company matters to you.`, score: 28, feedback: "Specific and credible." },
+          { text: "Say the company is exciting and you want to learn a lot.", score: 12, feedback: "Positive but generic." },
+          { text: "Lead with title and compensation.", score: 5, feedback: "Not the signal they want first." },
+        ],
+      },
+      {
+        prompt: "Tell me about a product win that proves you can do this job.",
+        answers: [
+          { text: "Use a structured story with metric impact, ownership, and the tradeoff you made.", score: 30, feedback: "Strong evidence and structure." },
+          { text: "Describe a team effort broadly without impact numbers.", score: 11, feedback: "Needs sharper ownership and outcomes." },
+          { text: "Stay vague because details are hard to remember.", score: 4, feedback: "Specificity matters in interviews." },
+        ],
+      },
+      {
+        prompt: "What would your first 90 days look like here?",
+        answers: [
+          { text: "Learn the product and users, map the metrics, find quick wins, then prioritize with partners.", score: 26, feedback: "Grounded and realistic." },
+          { text: "Ship something huge immediately to show impact.", score: 8, feedback: "Too rushed and context-light." },
+          { text: "Wait for perfect clarity before making moves.", score: 3, feedback: "This role needs initiative." },
+        ],
+      },
+    ],
+    log: `Boss fight started. Beat the panel with relevance, structure, and evidence.`,
+  };
+  renderEncounter();
+  showModal(battleModal);
+}
 
-  const building = currentBuildings().find((entry) => targets.some((point) => point.x === entry.x && point.y === entry.y));
-  if (building) {
-    interactBuilding(building);
+function renderEncounter() {
+  if (!encounterState) return;
+  document.getElementById("battle-title").textContent = encounterState.title;
+  document.getElementById("battle-subtitle").textContent = encounterState.subtitle;
+  document.getElementById("battle-player-name").textContent = state.player.name;
+  document.getElementById("battle-player-role").textContent = encounterState.kind === "wild" ? "Job Trainer" : state.player.targetRole;
+  document.getElementById("battle-enemy-name").textContent = `${encounterState.enemy.emoji || "◉"} ${encounterState.enemy.company}`;
+  document.getElementById("battle-enemy-role").textContent = encounterState.enemy.role;
+  document.getElementById("battle-player-hp").style.width = `${Math.max(0, encounterState.playerHp)}%`;
+  document.getElementById("battle-enemy-hp").style.width = `${Math.max(0, encounterState.enemyHp)}%`;
+  document.getElementById("battle-log").textContent = encounterState.log;
+
+  const questionEl = document.getElementById("battle-question");
+  const answersEl = document.getElementById("battle-answers");
+  const actionsEl = document.getElementById("battle-actions");
+  answersEl.innerHTML = "";
+  actionsEl.innerHTML = "";
+
+  if (encounterState.kind === "wild") {
+    questionEl.textContent = `Type: ${encounterState.enemy.type} · HP ${Math.max(0, encounterState.enemyHp)} / ${encounterState.enemy.hp}`;
+    [
+      { label: "Research", onClick: () => wildAttack("research") },
+      { label: "Tailor", onClick: () => wildAttack("tailor") },
+      { label: "Network", onClick: () => wildAttack("network") },
+      { label: "Apply to Capture", onClick: throwApplicationPacket },
+    ].forEach((move) => {
+      const button = document.createElement("button");
+      button.className = "pixel-btn primary";
+      button.textContent = move.label;
+      button.onclick = move.onClick;
+      answersEl.appendChild(button);
+    });
+    const runBtn = document.createElement("button");
+    runBtn.className = "pixel-btn ghost small";
+    runBtn.textContent = "Run";
+    runBtn.onclick = endEncounter;
+    actionsEl.appendChild(runBtn);
     return;
   }
 
-  if (targets.some((point) => point.x === guideNpc.x && point.y === guideNpc.y)) {
-    const signals = strongestResumeSignals(3);
-    showCoachDialogue(
-      state.resume.text
-        ? `Your strongest signals right now are ${signals.join(", ") || "still forming"}. Use them to make every answer and application specific.`
-        : "Import your resume when you can. Once I know your background, I can generate sharper company quests and better battle prompts."
-    );
+  const prompt = encounterState.questions[encounterState.turn];
+  if (!prompt) {
+    questionEl.textContent = "Boss fight complete.";
+  } else {
+    questionEl.textContent = prompt.prompt;
+    prompt.answers.forEach((answer) => {
+      const button = document.createElement("button");
+      button.className = "pixel-btn primary";
+      button.textContent = answer.text;
+      button.onclick = () => resolveInterviewTurn(answer);
+      answersEl.appendChild(button);
+    });
   }
+  const retreatBtn = document.createElement("button");
+  retreatBtn.className = "pixel-btn ghost small";
+  retreatBtn.textContent = "Retreat";
+  retreatBtn.onclick = endEncounter;
+  actionsEl.appendChild(retreatBtn);
+}
+
+function wildAttack(type) {
+  if (!encounterState || encounterState.kind !== "wild") return;
+  const multipliers = {
+    research: 14,
+    tailor: state.resume.text ? 24 : 16,
+    network: 12,
+  };
+  const enemyDamage = multipliers[type];
+  encounterState.enemyHp = Math.max(0, encounterState.enemyHp - enemyDamage);
+  if (type === "network") encounterState.captureBonus += 10;
+  encounterState.log = `${type === "research" ? "You studied the role." : type === "tailor" ? "You hit with a tailored story." : "You built warm rapport."} ${encounterState.enemy.company} lost ${enemyDamage} HP.`;
+  if (encounterState.enemyHp <= 0) {
+    encounterState.log += " The lead is ready for an application packet.";
+    renderEncounter();
+    return;
+  }
+  const counter = 10 + Math.floor(Math.random() * 10);
+  encounterState.playerHp = Math.max(0, encounterState.playerHp - counter);
+  encounterState.log += ` ${encounterState.enemy.company} pushed back for ${counter} resolve damage.`;
+  if (encounterState.playerHp <= 0) {
+    encounterState.log = `You ran out of resolve. Regroup and come back stronger.`;
+  }
+  renderEncounter();
+}
+
+function throwApplicationPacket() {
+  if (!encounterState || encounterState.kind !== "wild") return;
+  const captureChance = Math.min(0.92, 0.22 + encounterState.captureBonus / 100 + (encounterState.enemy.hp - encounterState.enemyHp) / encounterState.enemy.hp * 0.6);
+  if (Math.random() < captureChance) {
+    const lead = captureLeadFromEncounter(encounterState.enemy);
+    encounterState.log = `Captured ${lead.company}. It was added to your roster and set as your active lead.`;
+    renderEncounter();
+    setTimeout(endEncounter, 700);
+    return;
+  }
+  const counter = 14 + Math.floor(Math.random() * 8);
+  encounterState.playerHp = Math.max(0, encounterState.playerHp - counter);
+  encounterState.log = `${encounterState.enemy.company} broke free of the application packet. You took ${counter} resolve damage.`;
+  if (encounterState.playerHp <= 0) encounterState.log += " The opportunity got away this time.";
+  renderEncounter();
+}
+
+function resolveInterviewTurn(answer) {
+  if (!encounterState || encounterState.kind !== "interview") return;
+  const lead = getLead(encounterState.enemy.id);
+  const counter = Math.max(8, 30 - answer.score);
+  encounterState.enemyHp = Math.max(0, encounterState.enemyHp - answer.score);
+  encounterState.playerHp = Math.max(0, encounterState.playerHp - counter);
+  encounterState.log = `${answer.feedback} ${lead.company} pushed back for ${counter} resolve damage.`;
+
+  if (encounterState.enemyHp <= 0) {
+    lead.steps.interviewing = true;
+    lead.updatedAt = Date.now();
+    state.progress.interviews += 1;
+    state.progress.wins += 1;
+    applyXp(55);
+    saveState();
+    refreshChrome();
+    encounterState.log = `Victory. ${lead.company} sees you as interview-ready.`;
+    renderEncounter();
+    return;
+  }
+
+  if (encounterState.playerHp <= 0) {
+    encounterState.log = `You lost the boss fight. Tighten your stories and try again.`;
+    renderEncounter();
+    return;
+  }
+
+  encounterState.turn += 1;
+  if (encounterState.turn >= encounterState.questions.length) {
+    if (encounterState.enemyHp < encounterState.playerHp) {
+      lead.steps.interviewing = true;
+      lead.updatedAt = Date.now();
+      state.progress.interviews += 1;
+      state.progress.wins += 1;
+      applyXp(45);
+      saveState();
+      refreshChrome();
+      encounterState.log = `Narrow win. ${lead.company} bought your story.`;
+    } else {
+      encounterState.log = `The panel still has doubts. Train again in the arena.`;
+    }
+  }
+  renderEncounter();
+}
+
+function endEncounter() {
+  encounterState = null;
+  hideModal(battleModal);
+}
+
+function progressLead(step) {
+  const lead = getActiveLead();
+  if (!lead) {
+    showCoach("Set an active lead from your journal first.");
+    return;
+  }
+  const blockers = {
+    researched: () => null,
+    tailored: () => (!lead.steps.researched ? "Research the company first." : null),
+    networked: () => (!lead.steps.tailored ? "Tailor your story first." : null),
+    screened: () => (!lead.steps.networked ? "Warm the lead with outreach first." : null),
+    applied: () => (!lead.steps.screened ? "Prep the recruiter screen first." : null),
+    followedUp: () => (!lead.steps.applied ? "Submit the real application first." : null),
+    interviewing: () => (!lead.steps.followedUp ? "Send the follow-up before the boss fight." : null),
+    offered: () => (!lead.steps.interviewing ? "Win the interview boss fight first." : null),
+  };
+  const block = blockers[step]?.();
+  if (block) {
+    showCoach(block);
+    return;
+  }
+
+  if (step === "interviewing") {
+    startInterviewEncounter(lead);
+    return;
+  }
+
+  if (step === "offered") {
+    showDialogue({
+      speaker: "Offer Castle",
+      text: `How did ${lead.company} resolve?`,
+      actions: [
+        {
+          label: "Offer Won",
+          onSelect: () => {
+            lead.steps.offered = true;
+            lead.status = "won";
+            state.progress.offers += 1;
+            applyXp(100);
+            state.progress.coins += 90;
+            saveState();
+            refreshChrome();
+            showCoach(`Offer logged for ${lead.company}. Huge win.`);
+          },
+        },
+        {
+          label: "Rejected",
+          onSelect: () => {
+            lead.steps.rejected = true;
+            lead.status = "closed";
+            saveState();
+            refreshChrome();
+            showCoach(`${lead.company} was marked closed. Keep the pipeline moving.`);
+          },
+        },
+        { label: "Not Yet", onSelect: hideDialogue, ghost: true },
+      ],
+    });
+    return;
+  }
+
+  if (lead.steps[step]) {
+    showCoach(`${lead.company} already has this step logged.`);
+    return;
+  }
+
+  lead.steps[step] = true;
+  lead.updatedAt = Date.now();
+  if (step === "researched") applyXp(14);
+  if (step === "tailored") applyXp(24);
+  if (step === "networked") applyXp(20);
+  if (step === "screened") applyXp(22);
+  if (step === "applied") {
+    state.progress.applications += 1;
+    state.progress.coins += 18;
+    applyXp(35);
+  }
+  if (step === "followedUp") applyXp(18);
+  saveState();
+  refreshChrome();
+  showCoach(`${lead.company} advanced to ${stageLabels[getLeadStage(lead)]}.`, [
+    { label: "Open Job", onSelect: () => window.open(lead.url, "_blank", "noopener") },
+    { label: "Close", onSelect: hideDialogue, ghost: true },
+  ]);
+}
+
+function setDistrict(id) {
+  state.meta.currentDistrict = id;
+  runtimePlayer.x = 9;
+  runtimePlayer.y = 13;
+  runtimePlayer.renderX = 9;
+  runtimePlayer.renderY = 13;
+  runtimePlayer.toX = 9;
+  runtimePlayer.toY = 13;
+  saveState();
+  refreshChrome();
+}
+
+function showLeadIntel(lead) {
+  const quests = buildLeadQuests(lead);
+  showDialogue({
+    speaker: `${lead.company} Intel`,
+    text: quests.map((quest, index) => `${index + 1}. ${quest.title}: ${quest.text}`).join(" "),
+    actions: [
+      { label: "Set Active", onSelect: () => setActiveLead(lead.id) },
+      { label: "Open Job", onSelect: () => window.open(lead.url, "_blank", "noopener") },
+      { label: "Close", onSelect: hideDialogue, ghost: true },
+    ],
+  });
 }
 
 function interactBuilding(building) {
   const activeLead = getActiveLead();
-  const action = building.action;
-
-  if (action === "home") {
-    const lines = [
-      `${state.player.name}, you're in ${currentDistrict().name}.`,
-      `Target role: ${state.player.targetRole}. Goal: ${state.player.goal}.`,
-      activeLead ? `Current run: ${activeLead.company} at ${stageLabels[getLeadStage(activeLead)]}.` : "You do not have an active lead yet.",
-    ];
+  if (building.action === "home") {
     showDialogue({
-      speaker: building.name,
-      text: lines.join(" "),
+      speaker: building.label,
+      text: `${currentDistrict().name}: ${currentDistrict().subtitle}. ${activeLead ? `Current run: ${activeLead.company} at ${stageLabels[getLeadStage(activeLead)]}.` : "No active lead yet."}`,
       actions: [
-        { label: "Open journal", onSelect: showJournal },
-        { label: "Resume vault", onSelect: () => showModal(resumeModal) },
-        { label: "Add lead", onSelect: () => openLeadModal() },
+        { label: "Open Journal", onSelect: showJournal },
+        { label: "Resume Vault", onSelect: () => showModal(resumeModal), ghost: true },
       ],
     });
     return;
   }
 
-  if (action === "transit") {
-    const available = unlockedDistricts();
+  if (building.action === "dex") {
+    const pool = availableWildJobs();
     showDialogue({
-      speaker: building.name,
-      text: `Choose your next district. You are currently in ${currentDistrict().name}.`,
+      speaker: building.label,
+      text: pool.length ? `Tall grass in ${currentDistrict().name} still hides ${pool.length} uncaptured leads.` : `You already caught every seeded lead in ${currentDistrict().name}.`,
       actions: [
-        ...available.map((district) => ({
-          label: district.id === state.meta.currentDistrict ? `${district.name} (Here)` : district.name,
-          onSelect: () => setDistrict(district.id),
-        })),
-        ...(nextLockedDistrict() ? [{ label: nextLockedDistrict().name, onSelect: () => showCoachDialogue(`${nextLockedDistrict().name} is still locked. ${nextLockedDistrict().unlockText}.`) }] : []),
+        { label: "Open Journal", onSelect: showJournal },
+        { label: "Add Custom Lead", onSelect: () => openLeadModal(), ghost: true },
       ],
     });
     return;
   }
 
-  if (action === "scout") {
-    const districtLeads = demoLeads.filter((lead) => lead.district === currentDistrict().id);
+  if (building.action === "resume") {
+    if (!activeLead) return showCoach("Capture a lead first, then come back to tailor your story.");
+    const story = buildLeadQuests(activeLead)[1].text;
     showDialogue({
-      speaker: building.name,
-      text: `This district has ${districtLeads.length} seeded roles. Load more jobs into your roster or add your own.`,
+      speaker: building.label,
+      text: story,
       actions: [
-        {
-          label: "Load district jobs",
-          onSelect: () => {
-            districtLeads.forEach((lead) => {
-              const exists = state.leads.some((entry) => entry.company === lead.company && entry.role === lead.role);
-              if (!exists) addLead(lead, !state.meta.activeLeadId);
-            });
-            saveState();
-            refreshChrome();
-            showCoachDialogue(`${currentDistrict().name} jobs added to your roster.`);
-          },
-        },
-        { label: "Add custom lead", onSelect: () => openLeadModal() },
-        { label: "Open journal", onSelect: showJournal },
+        { label: "Log Tailoring", onSelect: () => progressLead("tailored") },
+        { label: "Open Resume Vault", onSelect: () => showModal(resumeModal), ghost: true },
       ],
     });
     return;
   }
 
-  if (action === "research") {
-    if (!activeLead) {
-      showCoachDialogue("Set an active lead first, then come back to research it.");
-      return;
-    }
+  if (building.action === "research") {
+    if (!activeLead) return showCoach("Capture a lead first, then research it.");
     const profile = companyProfile(activeLead);
     showDialogue({
-      speaker: building.name,
+      speaker: building.label,
       text: `${activeLead.company} focus: ${profile.focus}. ${profile.prep}`,
       actions: [
-        { label: "Log research", onSelect: () => progressLead("researched") },
-        { label: "Quest Intel", onSelect: () => showLeadQuestDialogue(activeLead) },
+        { label: "Log Research", onSelect: () => progressLead("researched") },
+        { label: "Open Job", onSelect: () => window.open(activeLead.url, "_blank", "noopener"), ghost: true },
       ],
     });
     return;
   }
 
-  if (action === "resume") {
-    if (!activeLead) {
-      showCoachDialogue("Set an active lead first, then tailor your story for it.");
-      return;
-    }
-    if (!state.resume.text) {
-      showDialogue({
-        speaker: building.name,
-        text: "Import your resume to unlock better tailoring guidance.",
-        actions: [
-          { label: "Open Resume Vault", onSelect: () => showModal(resumeModal) },
-          { label: "Tailor anyway", onSelect: () => progressLead("tailored") },
-        ],
-      });
-      return;
-    }
-    const quest = buildLeadQuests(activeLead)[1];
-    showDialogue({
-      speaker: building.name,
-      text: quest.text,
-      actions: [
-        { label: "Log tailoring", onSelect: () => progressLead("tailored") },
-        { label: "Open listing", onSelect: () => activeLead.url && window.open(activeLead.url, "_blank", "noopener") },
-      ],
-    });
-    return;
-  }
-
-  if (action === "network") {
+  if (building.action === "network") {
     progressLead("networked");
     return;
   }
 
-  if (action === "screen") {
+  if (building.action === "screen") {
     progressLead("screened");
     return;
   }
 
-  if (action === "apply") {
-    if (!activeLead) {
-      showCoachDialogue("Set an active lead first, then submit or follow up.");
-      return;
-    }
+  if (building.action === "apply") {
+    if (!activeLead) return showCoach("Capture a lead first, then submit the real application here.");
     showDialogue({
-      speaker: building.name,
-      text: `Ready to log the ${activeLead.company} submission? ${getNextObjective(activeLead)}`,
+      speaker: building.label,
+      text: activeLead.steps.applied ? `Log a follow-up for ${activeLead.company}.` : `Open the real listing for ${activeLead.company}, apply, then log it here.`,
       actions: [
-        ...(activeLead.url ? [{ label: "Open listing", onSelect: () => window.open(activeLead.url, "_blank", "noopener") }] : []),
-        { label: activeLead.steps.applied ? "Log follow-up" : "Log application", onSelect: () => progressLead(activeLead.steps.applied ? "followedUp" : "applied") },
-        { label: "Close", onSelect: hideDialogue },
+        { label: "Open Job", onSelect: () => window.open(activeLead.url, "_blank", "noopener") },
+        { label: activeLead.steps.applied ? "Log Follow-Up" : "Log Application", onSelect: () => progressLead(activeLead.steps.applied ? "followedUp" : "applied") },
       ],
     });
     return;
   }
 
-  if (action === "interview") {
+  if (building.action === "interview") {
     progressLead("interviewing");
     return;
   }
 
-  if (action === "offer") {
+  if (building.action === "offer") {
     progressLead("offered");
-  }
-}
-
-function drawWorld() {
-  if (scene !== "world") {
-    ctx.fillStyle = "#081820";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     return;
   }
 
-  camera.x = state.player.x * TILE - canvas.width / 2 + TILE / 2;
-  camera.y = state.player.y * TILE - canvas.height / 2 + TILE / 2;
-
-  ctx.fillStyle = districtBackground();
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  for (let y = 0; y < MAP_H; y += 1) {
-    for (let x = 0; x < MAP_W; x += 1) drawTile(x, y, tileAt(x, y));
+  if (building.action === "transit") {
+    showDialogue({
+      speaker: building.label,
+      text: `Choose your district. ${nextLockedDistrict() ? `Next unlock: ${nextLockedDistrict().name}.` : "Everything is unlocked."}`,
+      actions: [
+        ...unlockedDistricts().map((district) => ({
+          label: district.id === currentDistrict().id ? `${district.name} (Here)` : district.name,
+          onSelect: () => setDistrict(district.id),
+        })),
+        ...(nextLockedDistrict()
+          ? [{ label: nextLockedDistrict().name, onSelect: () => showCoach(`${nextLockedDistrict().name} is still locked. ${nextLockedDistrict().unlockText}.`), ghost: true }]
+          : []),
+      ],
+    });
   }
-
-  currentBuildings().forEach((building) => drawBuilding(building));
-  drawGuide();
-  drawPlayer();
-  drawDistrictBanner();
-  drawInteractionPrompt();
 }
 
-function districtBackground() {
-  const id = currentDistrict().id;
-  if (id === "scale") return "#111b2e";
-  if (id === "summit") return "#16142e";
-  return "#081820";
+function nearbyBuilding() {
+  const checks = [
+    [runtimePlayer.x + 1, runtimePlayer.y],
+    [runtimePlayer.x - 1, runtimePlayer.y],
+    [runtimePlayer.x, runtimePlayer.y + 1],
+    [runtimePlayer.x, runtimePlayer.y - 1],
+  ];
+  return currentBuildings().find((building) => checks.some(([x, y]) => x === building.x && y === building.y));
 }
 
-function drawTile(x, y, char) {
+function interact() {
+  if (!allOverlaysClosed() || currentDialogue || encounterState) return;
+  const building = nearbyBuilding();
+  if (building) {
+    interactBuilding(building);
+    return;
+  }
+  const nearCoach = [[runtimePlayer.x + 1, runtimePlayer.y], [runtimePlayer.x - 1, runtimePlayer.y], [runtimePlayer.x, runtimePlayer.y + 1], [runtimePlayer.x, runtimePlayer.y - 1]].some(([x, y]) => x === 8 && y === 5);
+  if (nearCoach) {
+    showCoach(state.resume.text ? `Your strongest resume signals are ${strongestResumeSignals(3).join(", ")}. Use them in encounters and boss fights.` : "Import your resume to make captures, quests, and boss fights feel more specific.");
+  }
+}
+
+function allOverlaysClosed() {
+  return introModal.classList.contains("hidden") && resumeModal.classList.contains("hidden") && leadModal.classList.contains("hidden") && journalPanel.classList.contains("hidden");
+}
+
+function update(dt) {
+  if (scene !== "world") return;
+  if (runtimePlayer.moving) {
+    runtimePlayer.progress += dt / runtimePlayer.moveDuration;
+    const t = Math.min(1, runtimePlayer.progress);
+    runtimePlayer.renderX = runtimePlayer.fromX + (runtimePlayer.toX - runtimePlayer.fromX) * t;
+    runtimePlayer.renderY = runtimePlayer.fromY + (runtimePlayer.toY - runtimePlayer.fromY) * t;
+    if (t >= 1) finishMove();
+    return;
+  }
+  if (!allOverlaysClosed() || currentDialogue || encounterState) return;
+  if (keys.ArrowLeft || keys.a) tryMove(-1, 0);
+  else if (keys.ArrowRight || keys.d) tryMove(1, 0);
+  else if (keys.ArrowUp || keys.w) tryMove(0, -1);
+  else if (keys.ArrowDown || keys.s) tryMove(0, 1);
+}
+
+function drawTile(x, y, tile) {
+  const palette = currentDistrict().palette;
   const px = x * TILE - camera.x;
   const py = y * TILE - camera.y;
   if (px < -TILE || py < -TILE || px > canvas.width + TILE || py > canvas.height + TILE) return;
-
-  if (char === "T") {
-    ctx.fillStyle = currentDistrict().id === "summit" ? "#465a7d" : "#4f772d";
+  if (tile === "T") {
+    ctx.fillStyle = palette.treeA;
     ctx.fillRect(px, py, TILE, TILE);
-    ctx.fillStyle = currentDistrict().id === "summit" ? "#7189a8" : "#31572c";
+    ctx.fillStyle = palette.treeB;
     ctx.beginPath();
     ctx.arc(px + 16, py + 14, 12, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#432818";
+    ctx.fillStyle = "#402918";
     ctx.fillRect(px + 13, py + 18, 6, 12);
     return;
   }
-
-  if (char === "~") {
-    ctx.fillStyle = currentDistrict().id === "summit" ? "#4a5bd8" : "#3a7ca5";
+  if (tile === "~") {
+    ctx.fillStyle = palette.water;
     ctx.fillRect(px, py, TILE, TILE);
-    ctx.fillStyle = "#8ecae6";
-    ctx.fillRect(px + 4, py + 10, 24, 3);
-    ctx.fillRect(px + 8, py + 19, 16, 3);
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.fillRect(px + 4, py + 10, 20, 3);
+    ctx.fillRect(px + 9, py + 19, 14, 3);
     return;
   }
-
-  if (char === ",") {
-    ctx.fillStyle = currentDistrict().id === "scale" ? "#b8a17c" : "#d9b06f";
+  if (tile === ",") {
+    ctx.fillStyle = palette.pathA;
     ctx.fillRect(px, py, TILE, TILE);
-    ctx.fillStyle = currentDistrict().id === "scale" ? "#9b8767" : "#c89450";
+    ctx.fillStyle = palette.pathB;
     ctx.fillRect(px + 4, py + 4, 24, 24);
     return;
   }
-
-  const grassA = currentDistrict().id === "scale" ? "#5f7f3f" : currentDistrict().id === "summit" ? "#4d5f86" : "#7aa032";
-  const grassB = currentDistrict().id === "scale" ? "#516d38" : currentDistrict().id === "summit" ? "#415074" : "#6c8f2f";
-  ctx.fillStyle = (x + y) % 2 === 0 ? grassA : grassB;
+  const grassBase = (x + y) % 2 === 0 ? currentDistrict().palette.grassA : currentDistrict().palette.grassB;
+  ctx.fillStyle = grassBase;
   ctx.fillRect(px, py, TILE, TILE);
-  if (char === "F") {
+  if (tile === "G") {
+    ctx.fillStyle = "rgba(227,255,183,0.45)";
+    for (let i = 0; i < 4; i += 1) {
+      const ox = 6 + i * 5;
+      ctx.fillRect(px + ox, py + 11 + (i % 2), 2, 12);
+    }
+  }
+  if (tile === "F") {
     ctx.fillStyle = "#ffe66d";
     ctx.fillRect(px + 10, py + 8, 4, 4);
     ctx.fillStyle = "#ff6b6b";
     ctx.fillRect(px + 16, py + 14, 4, 4);
-    ctx.fillStyle = "#f4f1de";
-    ctx.fillRect(px + 22, py + 10, 3, 3);
   }
 }
 
@@ -1335,22 +1284,18 @@ function drawBuilding(building) {
   ctx.lineTo(px + TILE / 2, py - 12);
   ctx.lineTo(px + TILE + 8, py + 4);
   ctx.fill();
-  ctx.fillStyle = "#f1faee";
-  ctx.fillRect(px + 8, py + 10, 16, 12);
+  ctx.fillStyle = "#f2f7e8";
+  ctx.fillRect(px + 9, py + 10, 14, 11);
   ctx.fillStyle = "#172015";
   ctx.fillRect(px + 13, py + 18, 6, 14);
-  ctx.fillStyle = "#f1faee";
+  ctx.fillStyle = "#f2f7e8";
   ctx.font = "12px 'Press Start 2P'";
   ctx.textAlign = "center";
-  ctx.fillText(building.glyph, px + TILE / 2, py - 16);
-  ctx.font = "10px 'Press Start 2P'";
-  ctx.fillStyle = "#e0f8cf";
-  ctx.fillText(building.name, px + TILE / 2, py + TILE + 18);
+  ctx.fillText(building.glyph, px + TILE / 2, py - 15);
   ctx.textAlign = "start";
-
   const activeLead = getActiveLead();
   if (activeLead) {
-    const stepMap = {
+    const map = {
       research: "researched",
       resume: "tailored",
       network: "networked",
@@ -1359,101 +1304,166 @@ function drawBuilding(building) {
       interview: "interviewing",
       offer: "offered",
     };
-    const step = stepMap[building.action];
+    const step = map[building.action];
     if (step && !activeLead.steps[step]) {
       ctx.fillStyle = "#ffcd38";
-      ctx.fillRect(px + TILE - 8, py - 8, 6, 6);
+      ctx.beginPath();
+      ctx.arc(px + TILE + 2, py - 6, 5, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 }
 
-function drawGuide() {
-  const px = guideNpc.x * TILE - camera.x;
-  const py = guideNpc.y * TILE - camera.y;
+function drawPlayer(time) {
+  const px = runtimePlayer.renderX * TILE - camera.x;
+  const py = runtimePlayer.renderY * TILE - camera.y;
+  const bob = runtimePlayer.moving ? Math.sin(time / 90) * 1.5 : 0;
+  ctx.fillStyle = "#0f1722";
+  ctx.fillRect(px + 7, py + 23, 18, 4);
+  ctx.fillStyle = "#1d3557";
+  ctx.fillRect(px + 8, py + 9 + bob, 16, 17);
+  ctx.fillStyle = "#f1c27d";
+  ctx.fillRect(px + 10, py + 4 + bob, 12, 10);
+  ctx.fillStyle = "#e63946";
+  ctx.fillRect(px + 7, py + 2 + bob, 18, 5);
+  ctx.fillStyle = "#172015";
+  ctx.fillRect(px + 11, py + 8 + bob, 2, 2);
+  ctx.fillRect(px + 19, py + 8 + bob, 2, 2);
+}
+
+function drawCoach() {
+  const px = 8 * TILE - camera.x;
+  const py = 5 * TILE - camera.y;
   ctx.fillStyle = "#ffd166";
   ctx.fillRect(px + 8, py + 8, 16, 16);
   ctx.fillStyle = "#0f380f";
   ctx.fillRect(px + 10, py + 12, 3, 3);
   ctx.fillRect(px + 19, py + 12, 3, 3);
   ctx.fillRect(px + 12, py + 20, 8, 2);
-  ctx.font = "10px 'Press Start 2P'";
-  ctx.fillStyle = "#e0f8cf";
-  ctx.fillText("Coach", px - 6, py - 8);
 }
 
-function drawPlayer() {
-  const px = state.player.x * TILE - camera.x;
-  const py = state.player.y * TILE - camera.y;
-  ctx.fillStyle = "#1d3557";
-  ctx.fillRect(px + 8, py + 8, 16, 18);
-  ctx.fillStyle = "#f1c27d";
-  ctx.fillRect(px + 10, py + 3, 12, 10);
-  ctx.fillStyle = currentDistrict().id === "summit" ? "#ff8fab" : "#e63946";
-  ctx.fillRect(px + 7, py + 1, 18, 5);
-  ctx.fillStyle = "#172015";
-  ctx.fillRect(px + 11, py + 7, 2, 2);
-  ctx.fillRect(px + 19, py + 7, 2, 2);
+function drawWorld(time) {
+  if (scene !== "world") {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+  camera.x = runtimePlayer.renderX * TILE - canvas.width / 2 + TILE / 2;
+  camera.y = runtimePlayer.renderY * TILE - canvas.height / 2 + TILE / 2;
+  ctx.fillStyle = currentDistrict().palette.bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let y = 0; y < MAP_H; y += 1) {
+    for (let x = 0; x < MAP_W; x += 1) drawTile(x, y, tileAt(x, y));
+  }
+  currentBuildings().forEach(drawBuilding);
+  drawCoach();
+  drawPlayer(time);
+  drawDistrictBanner();
+  drawPrompt();
 }
 
 function drawDistrictBanner() {
-  ctx.fillStyle = "rgba(8,24,32,0.72)";
-  ctx.fillRect(20, 82, 230, 36);
+  ctx.fillStyle = "rgba(8,24,32,0.74)";
+  ctx.fillRect(20, 84, 240, 38);
   ctx.strokeStyle = "#e0f8cf";
-  ctx.strokeRect(20, 82, 230, 36);
+  ctx.strokeRect(20, 84, 240, 38);
   ctx.fillStyle = "#e0f8cf";
   ctx.font = "10px 'Press Start 2P'";
-  ctx.fillText(currentDistrict().name, 32, 104);
+  ctx.fillText(currentDistrict().name, 32, 106);
 }
 
-function drawInteractionPrompt() {
-  const prompt = nearbyInteractionLabel();
-  if (!prompt) return;
+function drawPrompt() {
+  const building = nearbyBuilding();
+  if (!building) return;
+  const label = `SPACE ${building.label}`;
   ctx.font = "10px 'Press Start 2P'";
-  const width = ctx.measureText(prompt).width + 26;
-  const px = state.player.x * TILE - camera.x;
-  const py = state.player.y * TILE - camera.y;
-  ctx.fillStyle = "rgba(224,248,207,0.94)";
+  const width = ctx.measureText(label).width + 26;
+  const px = runtimePlayer.renderX * TILE - camera.x;
+  const py = runtimePlayer.renderY * TILE - camera.y;
+  ctx.fillStyle = "rgba(224,248,207,0.95)";
   ctx.fillRect(px - width / 2 + 16, py - 28, width, 20);
   ctx.strokeStyle = "#172015";
   ctx.strokeRect(px - width / 2 + 16, py - 28, width, 20);
   ctx.fillStyle = "#172015";
   ctx.textAlign = "center";
-  ctx.fillText(prompt, px + 16, py - 14);
+  ctx.fillText(label, px + 16, py - 14);
   ctx.textAlign = "start";
 }
 
-function nearbyInteractionLabel() {
-  const targets = [
-    { x: state.player.x + 1, y: state.player.y },
-    { x: state.player.x - 1, y: state.player.y },
-    { x: state.player.x, y: state.player.y + 1 },
-    { x: state.player.x, y: state.player.y - 1 },
-  ];
-  const building = currentBuildings().find((entry) => targets.some((point) => point.x === entry.x && point.y === entry.y));
-  if (building) return `SPACE ${building.name}`;
-  if (targets.some((point) => point.x === guideNpc.x && point.y === guideNpc.y)) return "SPACE Coach Byte";
-  return "";
-}
-
-function loop(timestamp) {
-  const dt = timestamp - lastTime;
-  lastTime = timestamp;
+function loop(time) {
+  const dt = time - lastTime;
+  lastTime = time;
   update(dt);
-  drawWorld();
+  drawWorld(time);
   requestAnimationFrame(loop);
 }
 
-newGameBtn.addEventListener("click", beginNewAdventure);
-continueBtn.addEventListener("click", startWorld);
-importResumeTitleBtn.addEventListener("click", () => showModal(resumeModal));
-openResumeModalBtn.addEventListener("click", () => showModal(resumeModal));
-openResumeJournalBtn.addEventListener("click", () => showModal(resumeModal));
-resetBtn.addEventListener("click", resetState);
-startSaveBtn.addEventListener("click", createNewSave);
-quickAddBtn.addEventListener("click", () => openLeadModal());
-deleteLeadBtn.addEventListener("click", deleteLead);
-closeBattleBtn.addEventListener("click", closeBattle);
-saveResumeBtn.addEventListener("click", saveResumeIntel);
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+document.getElementById("new-game-btn").addEventListener("click", () => {
+  playerNameInput.value = state.player.name === "Trainer" ? "" : state.player.name;
+  targetRoleInput.value = state.player.targetRole;
+  goalInput.value = state.player.goal;
+  showModal(introModal);
+});
+
+document.getElementById("continue-btn").addEventListener("click", () => {
+  scene = "world";
+  titleScreen.classList.remove("active");
+  document.getElementById("hud").classList.add("active");
+  refreshChrome();
+});
+
+document.getElementById("import-resume-title-btn").addEventListener("click", () => showModal(resumeModal));
+document.getElementById("open-resume-modal-btn").addEventListener("click", () => showModal(resumeModal));
+document.getElementById("open-resume-journal-btn").addEventListener("click", () => showModal(resumeModal));
+document.getElementById("reset-btn").addEventListener("click", () => {
+  localStorage.removeItem(STORAGE_KEY);
+  state = defaultState();
+  runtimePlayer.x = 9;
+  runtimePlayer.y = 13;
+  runtimePlayer.renderX = 9;
+  runtimePlayer.renderY = 13;
+  runtimePlayer.toX = 9;
+  runtimePlayer.toY = 13;
+  endEncounter();
+  hideDialogue();
+  hideJournal();
+  hideModal(introModal);
+  hideModal(resumeModal);
+  hideModal(leadModal);
+  document.getElementById("hud").classList.remove("active");
+  titleScreen.classList.add("active");
+  scene = "title";
+  refreshChrome();
+});
+
+document.getElementById("start-save-btn").addEventListener("click", () => {
+  state = defaultState();
+  state.player.name = (playerNameInput.value || "Trainer").trim();
+  state.player.targetRole = (targetRoleInput.value || "Product Manager").trim();
+  state.player.goal = (goalInput.value || "Land a role I am proud of").trim();
+  runtimePlayer.x = 9;
+  runtimePlayer.y = 13;
+  runtimePlayer.renderX = 9;
+  runtimePlayer.renderY = 13;
+  runtimePlayer.toX = 9;
+  runtimePlayer.toY = 13;
+  applyXp(10);
+  saveState();
+  hideModal(introModal);
+  scene = "world";
+  titleScreen.classList.remove("active");
+  document.getElementById("hud").classList.add("active");
+  refreshChrome();
+});
+
+document.getElementById("quick-add-btn").addEventListener("click", () => openLeadModal());
+document.getElementById("save-resume-btn").addEventListener("click", saveResumeIntel);
+document.getElementById("close-battle-btn").addEventListener("click", endEncounter);
+document.getElementById("delete-lead-btn").addEventListener("click", deleteLead);
 leadForm.addEventListener("submit", updateLeadFromForm);
 
 document.querySelectorAll("[data-close-modal]").forEach((button) => {
@@ -1466,48 +1476,23 @@ document.querySelectorAll("[data-hide]").forEach((button) => {
 
 document.addEventListener("keydown", (event) => {
   keys[event.key] = true;
-
-  if ((event.key === " " || event.key === "Enter") && !battleState) {
+  if (event.key === " " || event.key === "Enter") {
     event.preventDefault();
-    if (currentDialogue) return;
-    interact();
+    if (!encounterState && !currentDialogue) interact();
   }
-
   if (event.key.toLowerCase() === "j" && scene === "world") {
     journalPanel.classList.toggle("hidden");
     refreshChrome();
   }
-
-  if (event.key.toLowerCase() === "n" && scene === "world") {
-    openLeadModal();
-  }
-
-  if (event.key.toLowerCase() === "r" && scene === "world") {
-    showModal(resumeModal);
-  }
-
+  if (event.key.toLowerCase() === "r" && scene === "world") showModal(resumeModal);
+  if (event.key.toLowerCase() === "n" && scene === "world") openLeadModal();
   if (event.key === "Escape") {
-    if (battleState) {
-      closeBattle();
-      return;
-    }
-    if (!leadModal.classList.contains("hidden")) {
-      hideModal(leadModal);
-      return;
-    }
-    if (!introModal.classList.contains("hidden")) {
-      hideModal(introModal);
-      return;
-    }
-    if (!resumeModal.classList.contains("hidden")) {
-      hideModal(resumeModal);
-      return;
-    }
-    if (currentDialogue) {
-      hideDialogue();
-      return;
-    }
-    if (!journalPanel.classList.contains("hidden")) hideJournal();
+    if (encounterState) return endEncounter();
+    if (currentDialogue) return hideDialogue();
+    if (!leadModal.classList.contains("hidden")) return hideModal(leadModal);
+    if (!resumeModal.classList.contains("hidden")) return hideModal(resumeModal);
+    if (!introModal.classList.contains("hidden")) return hideModal(introModal);
+    if (!journalPanel.classList.contains("hidden")) return hideJournal();
   }
 });
 
