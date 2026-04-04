@@ -3,29 +3,200 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Job Quest | Sidharth Singh</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      overflow: hidden;
-    }
-
-    canvas {
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
-      image-rendering: -moz-crisp-edges;
-      image-rendering: -webkit-crisp-edges;
-    }
-  </style>
+  <title>Career Quest RPG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <script src="https://unpkg.com/kaplay@3001.0.0/dist/kaplay.js"></script>
-  <script type="module" src="main.js"></script>
+  <canvas id="game" aria-label="Career Quest game world"></canvas>
+
+  <div id="title-screen" class="screen active">
+    <div class="panel title-panel">
+      <p class="eyebrow">JOB SEARCH RPG</p>
+      <h1>Career Quest</h1>
+      <p class="lede">A Pokemon Red inspired game loop for running your real application process.</p>
+      <div class="title-actions">
+        <button id="new-game-btn" class="pixel-btn primary">New Adventure</button>
+        <button id="continue-btn" class="pixel-btn ghost">Continue</button>
+        <button id="import-resume-title-btn" class="pixel-btn ghost">Import Resume</button>
+        <button id="reset-btn" class="pixel-btn ghost danger">Reset Save</button>
+      </div>
+      <ul class="feature-list">
+        <li>Track real companies and roles</li>
+        <li>Progress leads from scout to offer</li>
+        <li>Earn XP, coins, badges, and streaks</li>
+        <li>Use buildings as your application workflow</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="intro-modal" class="modal hidden">
+    <div class="panel modal-panel">
+      <h2>Start Your Save</h2>
+      <label class="field">
+        <span>Player name</span>
+        <input id="player-name-input" type="text" maxlength="24" placeholder="Sidharth">
+      </label>
+      <label class="field">
+        <span>Target role</span>
+        <input id="target-role-input" type="text" maxlength="48" placeholder="Product Manager">
+      </label>
+      <label class="field">
+        <span>North-star goal</span>
+        <input id="goal-input" type="text" maxlength="72" placeholder="Land a PM role in AI or gaming">
+      </label>
+      <div class="modal-actions">
+        <button id="start-save-btn" class="pixel-btn primary">Begin Journey</button>
+        <button id="open-resume-modal-btn" class="pixel-btn ghost">Import Resume First</button>
+        <button data-close-modal="intro-modal" class="pixel-btn ghost">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="resume-modal" class="modal hidden">
+    <div class="panel modal-panel">
+      <div class="panel-header">
+        <h2>Resume Vault</h2>
+        <button data-close-modal="resume-modal" class="pixel-btn ghost small">Close</button>
+      </div>
+      <div class="field-grid">
+        <label class="field full">
+          <span>Upload PDF or TXT</span>
+          <input id="resume-file-input" type="file" accept=".pdf,.txt,.md,.docx,text/plain,application/pdf">
+        </label>
+        <label class="field full">
+          <span>Or paste resume text</span>
+          <textarea id="resume-text-input" rows="10" placeholder="Paste your resume, LinkedIn summary, or accomplishment bullets here."></textarea>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button id="save-resume-btn" class="pixel-btn primary">Save Resume Intel</button>
+      </div>
+      <p id="resume-status" class="status-text"></p>
+    </div>
+  </div>
+
+  <div id="hud">
+    <div class="hud-group">
+      <span id="hud-name">Trainer</span>
+      <span id="hud-level">Lv.1</span>
+      <span id="hud-xp">XP 0 / 100</span>
+    </div>
+    <div class="hud-group">
+      <span id="hud-coins">Coins 0</span>
+      <span id="hud-streak">Streak 0</span>
+      <span id="hud-active-lead">No active lead</span>
+    </div>
+  </div>
+
+  <div id="hint-bar">Arrow keys or WASD to move. Space to interact. J for journal. N for new lead.</div>
+
+  <div id="dialogue-box" class="hidden">
+    <div id="dialogue-speaker">Guide</div>
+    <div id="dialogue-text"></div>
+    <div id="dialogue-actions"></div>
+    <div id="dialogue-help">Press Esc to close</div>
+  </div>
+
+  <div id="journal-panel" class="panel side-panel hidden">
+    <div class="panel-header">
+      <h2>Trainer Journal</h2>
+      <button data-hide="journal-panel" class="pixel-btn ghost small">Close</button>
+    </div>
+    <div class="stats-grid" id="summary-grid"></div>
+    <div class="journal-section">
+      <div class="section-header">
+        <h3>Resume Intel</h3>
+        <button id="open-resume-journal-btn" class="pixel-btn ghost small">Update</button>
+      </div>
+      <div id="resume-summary" class="quest-card"></div>
+    </div>
+    <div class="journal-section">
+      <div class="section-header">
+        <h3>Lead Roster</h3>
+        <button id="quick-add-btn" class="pixel-btn primary small">Add Lead</button>
+      </div>
+      <div id="lead-list" class="lead-list"></div>
+    </div>
+    <div class="journal-section">
+      <h3>Quest Board</h3>
+      <div id="quest-board" class="quest-board"></div>
+    </div>
+  </div>
+
+  <div id="lead-modal" class="modal hidden">
+    <div class="panel modal-panel">
+      <div class="panel-header">
+        <h2 id="lead-modal-title">Add Lead</h2>
+        <button data-close-modal="lead-modal" class="pixel-btn ghost small">Close</button>
+      </div>
+      <form id="lead-form">
+        <input type="hidden" id="lead-id-input">
+        <div class="field-grid">
+          <label class="field">
+            <span>Company</span>
+            <input id="company-input" type="text" maxlength="40" required>
+          </label>
+          <label class="field">
+            <span>Role</span>
+            <input id="role-input" type="text" maxlength="60" required>
+          </label>
+          <label class="field">
+            <span>Location</span>
+            <input id="location-input" type="text" maxlength="40">
+          </label>
+          <label class="field">
+            <span>Priority</span>
+            <select id="priority-input">
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </label>
+          <label class="field full">
+            <span>Job link</span>
+            <input id="url-input" type="url" maxlength="200" placeholder="https://company.com/jobs/...">
+          </label>
+          <label class="field full">
+            <span>Notes</span>
+            <textarea id="notes-input" rows="4" maxlength="400" placeholder="Why this company matters, referrals, prep notes..."></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="pixel-btn primary">Save Lead</button>
+          <button type="button" id="delete-lead-btn" class="pixel-btn ghost danger hidden">Delete Lead</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="battle-modal" class="modal hidden">
+    <div class="panel battle-panel">
+      <div class="panel-header">
+        <h2>Interview Arena</h2>
+        <button id="close-battle-btn" class="pixel-btn ghost small">Retreat</button>
+      </div>
+      <div class="battle-topline">
+        <div class="battle-card">
+          <strong id="battle-player-name">Trainer</strong>
+          <p id="battle-player-role">Candidate</p>
+          <div class="hp-bar"><div id="battle-player-hp" class="hp-fill player"></div></div>
+        </div>
+        <div class="battle-card enemy">
+          <strong id="battle-enemy-name">Company</strong>
+          <p id="battle-enemy-role">Interview Panel</p>
+          <div class="hp-bar"><div id="battle-enemy-hp" class="hp-fill enemy"></div></div>
+        </div>
+      </div>
+      <div id="battle-log" class="battle-log"></div>
+      <div id="battle-question" class="battle-question"></div>
+      <div id="battle-answers" class="battle-answers"></div>
+      <div id="battle-actions" class="battle-actions"></div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
 </body>
 </html>
