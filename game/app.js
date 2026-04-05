@@ -856,7 +856,7 @@ function renderEncounter() {
       { label: "Research", onClick: () => wildAttack("research") },
       { label: "Tailor", onClick: () => wildAttack("tailor") },
       { label: "Network", onClick: () => wildAttack("network") },
-      { label: "Apply to Capture", onClick: throwApplicationPacket },
+      { label: "Capture Lead", onClick: throwApplicationPacket },
     ].forEach((move) => {
       const button = document.createElement("button");
       button.className = "pixel-btn primary";
@@ -911,7 +911,7 @@ function wildAttack(type) {
   if (type === "network") encounterState.captureBonus += 10;
   encounterState.log = `${type === "research" ? "You studied the role." : type === "tailor" ? "You hit with a tailored story." : "You built warm rapport."} ${encounterState.enemy.company} lost ${enemyDamage} HP.`;
   if (encounterState.enemyHp <= 0) {
-    encounterState.log += " The lead is ready for an application packet.";
+    encounterState.log += " The lead is ready to be captured into your roster.";
     renderEncounter();
     return;
   }
@@ -929,7 +929,7 @@ function throwApplicationPacket() {
   const captureChance = Math.min(0.92, 0.22 + encounterState.captureBonus / 100 + (encounterState.enemy.hp - encounterState.enemyHp) / encounterState.enemy.hp * 0.6);
   if (Math.random() < captureChance) {
     const lead = captureLeadFromEncounter(encounterState.enemy);
-    encounterState.log = `Captured ${lead.company}. It was added to your roster and set as your active lead. Visit Application Gate to open the real posting and log your application.`;
+    encounterState.log = `Captured ${lead.company}. It is now in your roster. Next: go to Application Gate, open the real posting, and apply on the company site.`;
     renderEncounter();
     setTimeout(endEncounter, 700);
     return;
