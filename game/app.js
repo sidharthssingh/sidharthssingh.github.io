@@ -26,7 +26,7 @@ const actualJobLinks = {
   openai: "https://openai.com/careers/search/?c=1888df7a-5060-4de1-a08d-a07e0ef96ab9",
   anthropic: "https://www.anthropic.com/careers",
   vercel: "https://vercel.com/careers",
-  linear: "https://linear.app/careers/86abcce0-04b2-405c-9a8e-e0ca84813914?ashby_jid=b7669c4b-eeca-421d-ba9a-d90203f6fcb2",
+  linear: "https://linear.app/careers",
   supabase: "https://supabase.com/careers",
   riot: "https://www.riotgames.com/en/work-with-us",
   atlassian: "https://www.atlassian.com/company/careers",
@@ -380,6 +380,14 @@ function buildLeadQuests(lead) {
   ];
 }
 
+function openExternalJob(url) {
+  if (!url) return;
+  const popup = window.open(url, "_blank", "noopener,noreferrer");
+  if (!popup) {
+    window.location.href = url;
+  }
+}
+
 function detectResumeIntel(text) {
   const normalized = text.toLowerCase();
   const signals = keywordSignals
@@ -481,6 +489,19 @@ function showDialogue(config) {
   dialogueText.textContent = config.text;
   dialogueActions.innerHTML = "";
   config.actions.forEach((action) => {
+    if (action.href) {
+      const link = document.createElement("a");
+      link.className = `pixel-btn ${action.ghost ? "ghost" : "primary"} small`;
+      link.textContent = action.label;
+      link.href = action.href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.onclick = () => {
+        if (action.close !== false) hideDialogue();
+      };
+      dialogueActions.appendChild(link);
+      return;
+    }
     const button = document.createElement("button");
     button.className = `pixel-btn ${action.ghost ? "ghost" : "primary"} small`;
     button.textContent = action.label;
@@ -592,6 +613,7 @@ function renderLeadList() {
         </div>
         <p>${lead.location || "Location TBD"} · ${stageLabels[getLeadStage(lead)]}</p>
         <p>${getNextObjective(lead)}</p>
+        <p><a href="${lead.url}" target="_blank" rel="noopener noreferrer">Open official job page</a></p>
         <div class="lead-card-actions"></div>
       `;
       const actions = card.querySelector(".lead-card-actions");
@@ -608,7 +630,7 @@ function renderLeadList() {
       const linkBtn = document.createElement("button");
       linkBtn.className = "pixel-btn ghost small";
       linkBtn.textContent = "Open Job";
-      linkBtn.onclick = () => window.open(lead.url, "_blank", "noopener");
+      linkBtn.onclick = () => openExternalJob(lead.url);
       actions.appendChild(linkBtn);
       const editBtn = document.createElement("button");
       editBtn.className = "pixel-btn ghost small";
@@ -1043,7 +1065,7 @@ function progressLead(step) {
   saveState();
   refreshChrome();
   showCoach(`${lead.company} advanced to ${stageLabels[getLeadStage(lead)]}.`, [
-    { label: "Open Job", onSelect: () => window.open(lead.url, "_blank", "noopener") },
+    { label: "Open Job", href: lead.url },
     { label: "Close", onSelect: hideDialogue, ghost: true },
   ]);
 }
@@ -1065,12 +1087,12 @@ function showLeadIntel(lead) {
   showDialogue({
     speaker: `${lead.company} Intel`,
     text: quests.map((quest, index) => `${index + 1}. ${quest.title}: ${quest.text}`).join(" "),
-    actions: [
-      { label: "Set Active", onSelect: () => setActiveLead(lead.id) },
-      { label: "Open Job", onSelect: () => window.open(lead.url, "_blank", "noopener") },
-      { label: "Close", onSelect: hideDialogue, ghost: true },
-    ],
-  });
+      actions: [
+        { label: "Set Active", onSelect: () => setActiveLead(lead.id) },
+        { label: "Open Job", href: lead.url },
+        { label: "Close", onSelect: hideDialogue, ghost: true },
+      ],
+    });
 }
 
 function interactBuilding(building) {
@@ -1122,7 +1144,7 @@ function interactBuilding(building) {
       text: `${activeLead.company} focus: ${profile.focus}. ${profile.prep}`,
       actions: [
         { label: "Log Research", onSelect: () => progressLead("researched") },
-        { label: "Open Job", onSelect: () => window.open(activeLead.url, "_blank", "noopener"), ghost: true },
+        { label: "Open Job", href: activeLead.url, ghost: true },
       ],
     });
     return;
@@ -1144,7 +1166,7 @@ function interactBuilding(building) {
       speaker: building.label,
       text: activeLead.steps.applied ? `Log a follow-up for ${activeLead.company}.` : `Open the real listing for ${activeLead.company}, apply, then log it here.`,
       actions: [
-        { label: "Open Job", onSelect: () => window.open(activeLead.url, "_blank", "noopener") },
+        { label: "Open Job", href: activeLead.url },
         { label: activeLead.steps.applied ? "Log Follow-Up" : "Log Application", onSelect: () => progressLead(activeLead.steps.applied ? "followedUp" : "applied") },
       ],
     });

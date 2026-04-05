@@ -326,6 +326,13 @@ h1 {
   line-height: 1.5;
 }
 
+.lead-card a,
+#dialogue-actions a {
+  color: #0d4bcf;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .lead-card-actions {
   display: flex;
   flex-wrap: wrap;
