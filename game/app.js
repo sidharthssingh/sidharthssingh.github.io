@@ -779,12 +779,12 @@ function startWildEncounter() {
   encounterState = {
     kind: "wild",
     title: "Wild Encounter",
-    subtitle: `A wild ${job.company} role appeared in the grass.`,
+    subtitle: `A wild ${job.company} role appeared in the grass. Blue bar = your resolve. Red bar = the role's capture resistance.`,
     enemy: job,
     enemyHp: job.hp,
     playerHp: 100,
     captureBonus: 0,
-    log: `You found ${job.company} ${job.role}. Weaken it, then throw an application packet to capture the lead.`,
+    log: `You found ${job.company} ${job.role}. Open the official job page, weaken the lead, then use Apply to Capture to add it to your roster.`,
   };
   renderEncounter();
   showModal(battleModal);
@@ -837,7 +837,7 @@ function renderEncounter() {
   document.getElementById("battle-title").textContent = encounterState.title;
   document.getElementById("battle-subtitle").textContent = encounterState.subtitle;
   document.getElementById("battle-player-name").textContent = state.player.name;
-  document.getElementById("battle-player-role").textContent = encounterState.kind === "wild" ? "Job Trainer" : state.player.targetRole;
+  document.getElementById("battle-player-role").textContent = encounterState.kind === "wild" ? "Resolve Meter" : state.player.targetRole;
   document.getElementById("battle-enemy-name").textContent = `${encounterState.enemy.emoji || "◉"} ${encounterState.enemy.company}`;
   document.getElementById("battle-enemy-role").textContent = encounterState.enemy.role;
   document.getElementById("battle-player-hp").style.width = `${Math.max(0, encounterState.playerHp)}%`;
@@ -851,7 +851,7 @@ function renderEncounter() {
   actionsEl.innerHTML = "";
 
   if (encounterState.kind === "wild") {
-    questionEl.textContent = `Type: ${encounterState.enemy.type} · HP ${Math.max(0, encounterState.enemyHp)} / ${encounterState.enemy.hp}`;
+    questionEl.textContent = `Type: ${encounterState.enemy.type} · Resistance ${Math.max(0, encounterState.enemyHp)} / ${encounterState.enemy.hp}`;
     [
       { label: "Research", onClick: () => wildAttack("research") },
       { label: "Tailor", onClick: () => wildAttack("tailor") },
@@ -869,6 +869,13 @@ function renderEncounter() {
     runBtn.textContent = "Run";
     runBtn.onclick = endEncounter;
     actionsEl.appendChild(runBtn);
+    const linkEl = document.createElement("a");
+    linkEl.className = "pixel-btn ghost small";
+    linkEl.textContent = "Open Official Job";
+    linkEl.href = encounterState.enemy.url;
+    linkEl.target = "_blank";
+    linkEl.rel = "noopener noreferrer";
+    actionsEl.appendChild(linkEl);
     return;
   }
 
@@ -922,7 +929,7 @@ function throwApplicationPacket() {
   const captureChance = Math.min(0.92, 0.22 + encounterState.captureBonus / 100 + (encounterState.enemy.hp - encounterState.enemyHp) / encounterState.enemy.hp * 0.6);
   if (Math.random() < captureChance) {
     const lead = captureLeadFromEncounter(encounterState.enemy);
-    encounterState.log = `Captured ${lead.company}. It was added to your roster and set as your active lead.`;
+    encounterState.log = `Captured ${lead.company}. It was added to your roster and set as your active lead. Visit Application Gate to open the real posting and log your application.`;
     renderEncounter();
     setTimeout(endEncounter, 700);
     return;
@@ -1164,7 +1171,9 @@ function interactBuilding(building) {
     if (!activeLead) return showCoach("Capture a lead first, then submit the real application here.");
     showDialogue({
       speaker: building.label,
-      text: activeLead.steps.applied ? `Log a follow-up for ${activeLead.company}.` : `Open the real listing for ${activeLead.company}, apply, then log it here.`,
+      text: activeLead.steps.applied
+        ? `Step 1: open the official ${activeLead.company} job page. Step 2: send your follow-up. Step 3: come back here and log it.`
+        : `Step 1: open the official ${activeLead.company} job page. Step 2: actually apply on their site. Step 3: come back here and click Log Application.`,
       actions: [
         { label: "Open Job", href: activeLead.url },
         { label: activeLead.steps.applied ? "Log Follow-Up" : "Log Application", onSelect: () => progressLead(activeLead.steps.applied ? "followedUp" : "applied") },
